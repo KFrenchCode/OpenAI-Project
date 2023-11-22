@@ -4,6 +4,12 @@ from transformers import pipeline, Pipeline, PreTrainedTokenizerFast
 import requests
 from bs4 import BeautifulSoup
 import fitz
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
+import tiktoken
+
+load_dotenv()
 
 class ReportGeneratorApp:
     # ReportGenerator Initializer
@@ -24,8 +30,16 @@ class ReportGeneratorApp:
 
         self.current_source_location: str = ""
 
-        # Initialize Model
-        self.summarizer: Pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
+        # # Initialize Model LEGACY, SWITCHED TO OPENAI
+        # self.summarizer: Pipeline = pipeline("summarization", model="facebook/bart-large-cnn")
+        
+        # Initialize OpenAI
+        self.client = OpenAI(
+            api_key=os.getenv("OPENAI_API_KEY"),
+        )
+
+        # Initialize encoder
+        self.encoder = tiktoken.get_encoding("cl100k_base")
 
 
         # Initialize Summaries
@@ -74,7 +88,7 @@ class ReportGeneratorApp:
 
         # # URL of Source Entry
         self.new_source_url_entry = tk.Entry(new_source_frame)
-        # self.new_source_url_entry.grid(column=1, row=3, pady=5)
+        self.new_source_url_entry.grid(column=1, row=3, pady=5)
 
         # # File Upload Button
         self.file_upload_button = tk.Button(new_source_frame, text="Upload File", command=self.upload_file)
@@ -107,9 +121,9 @@ class ReportGeneratorApp:
 
         # Show the relevant widget based on the source type
         if source_type == "url":
-            self.new_source_url_entry.grid(column=1, row=4, pady=5, padx=5)
+            self.new_source_url_entry.grid(column=1, row=3, pady=5, padx=5)
         elif source_type == "file":
-            self.file_upload_button.grid(column=1, row=4, pady=5, padx=5)
+            self.file_upload_button.grid(column=1, row=3, pady=5, padx=5)
 
     def create_file_upload_button(self):
         # Create a file upload button
@@ -234,22 +248,54 @@ class ReportGeneratorApp:
                     continue
 
             # Split the text into chunks based on the maximum token length
-            max_token_length = 1024
-            chunks = [text[i:i + max_token_length] for i in range(0, len(text), max_token_length)]
+            max_token_length = 12000
+
+            encoding = self.encoder.encode(text)
+
+            chunks = [encoding[i:i + max_token_length] for i in range(0, len(encoding), max_token_length)]
 
             # Initialize summary bits
             summary_bits = []
 
             # Summarize each chunk and print the results
-            for chunk in chunks:
-                print(f"chunk:\n{chunk}")
-                summary = self.summarizer(chunk, max_length=80, min_length=0, do_sample=False)[0]["summary_text"]
+            for i, chunk in enumerate(chunks):
+                print(f"Currently processing chunk {i+1}/{len(chunks)}...")
+                text_chunk = self.encoder.decode(chunk)
+                summary_object = self.client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are going to act as a summarizer for the following text, giving 2-3 sentences of summarization:"
+                        },
+                        {
+                            "role": "user",
+                            "content": text_chunk
+                        }
+                    ],
+                    model="gpt-3.5-turbo-16k"
+                )
 
-                print(f"summary:\n{summary}")
-                summary_bits.append(summary)
+                summary_bits.append(summary_object.choices[0].message.content.replace("\n", " "))
 
-            # summary = self.summarizer(" ".join(summary_bits), max_length=130, min_length=30, do_sample=False)[0]["summary_text"]
-            # print(summary)
+            all_summaries_together_text = " ".join(summary_bits)
+
+            total_summary_object = self.client.chat.completions.create(
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are going to act as a summarizer for the following text, giving 5-6 sentences of summarization:"
+                        },
+                        {
+                            "role": "user",
+                            "content": all_summaries_together_text
+                        }
+                    ],
+                    model="gpt-3.5-turbo-16k"
+                )
+            
+            print(total_summary_object.choices[0].message.content)
+
+
 
 
 
