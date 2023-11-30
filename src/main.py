@@ -260,6 +260,7 @@ class ReportGeneratorApp:
             # Summarize each chunk and print the results
             for i, chunk in enumerate(chunks):
                 print(f"Currently processing chunk {i+1}/{len(chunks)}...")
+                
                 text_chunk = self.encoder.decode(chunk)
                 summary_object = self.client.chat.completions.create(
                     messages=[
