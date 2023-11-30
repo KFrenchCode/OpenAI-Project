@@ -8,6 +8,7 @@ from openai import OpenAI
 from dotenv import load_dotenv
 import os
 import tiktoken
+from docx import Document
 
 load_dotenv()
 
@@ -35,7 +36,7 @@ class ReportGeneratorApp:
         
         # Initialize OpenAI
         self.client = OpenAI(
-            api_key=os.getenv("OPENAI_API_KEY"),
+            api_key=os.getenv("VSFS_KEY"),
         )
 
         # Initialize encoder
@@ -44,6 +45,8 @@ class ReportGeneratorApp:
 
         # Initialize Summaries
         self.summaries: list[dict[str, str]] = []
+
+        self.export_document = Document()
         
 
     def create_initial_widgets(self):
@@ -67,28 +70,36 @@ class ReportGeneratorApp:
         self.new_source_title_entry = tk.Entry(new_source_frame)
         self.new_source_title_entry.grid(column=1, row=0, pady=5)
 
+        # Country of Source Label
+        new_source_country_label = tk.Label(new_source_frame, text="Country of Source:", font=("Arial", 12), width=50)
+        new_source_country_label.grid(column=0, row=1, pady=5)
+
+        # Country of Source Entry
+        self.new_source_country_entry = tk.Entry(new_source_frame)
+        self.new_source_country_entry.grid(column=1, row=1, pady=5)
+
         # Source Type Label
         source_type_label = tk.Label(new_source_frame, text="Source Type:", font=("Arial", 12))
-        source_type_label.grid(column=0, row=1, pady=5)
+        source_type_label.grid(column=0, row=2, pady=5)
 
         # Radio button for URL
         self.source_type_url = tk.Radiobutton(new_source_frame, text="URL", variable=self.source_type_var, value="url", command=self.toggle_source_input)
-        self.source_type_url.grid(column=1, row=1, pady=5)
+        self.source_type_url.grid(column=1, row=2, pady=5)
 
         # Radio button for File
         self.source_type_file = tk.Radiobutton(new_source_frame, text="File", variable=self.source_type_var, value="file", command=self.toggle_source_input)
-        self.source_type_file.grid(column=1, row=2, pady=5)
+        self.source_type_file.grid(column=1, row=3, pady=5)
 
         # Initially, set the source type to URL
         self.source_type_var.set("url")
 
         # URL of Source Label
         new_source_url_label = tk.Label(new_source_frame, text="Source Location:", font=("Arial", 12))
-        new_source_url_label.grid(column=0, row=3, pady=5)
+        new_source_url_label.grid(column=0, row=4, pady=5)
 
         # # URL of Source Entry
         self.new_source_url_entry = tk.Entry(new_source_frame)
-        self.new_source_url_entry.grid(column=1, row=3, pady=5)
+        self.new_source_url_entry.grid(column=1, row=4, pady=5)
 
         # # File Upload Button
         self.file_upload_button = tk.Button(new_source_frame, text="Upload File", command=self.upload_file)
@@ -112,6 +123,18 @@ class ReportGeneratorApp:
         summarize_button = tk.Button(self.root, text="Summarize Sources", command=self.summarize)
         summarize_button.grid(column=0, row=3)
 
+        # Save Summaries Frame 
+        self.save_source_summaries_frame = tk.Frame(self.root)
+        self.save_source_summaries_frame.grid(column=0, row=4)
+
+        # New Source Label
+        self.save_source_summaries_label = tk.Label(self.save_source_summaries_frame, text="Save Source", font=("Arial", 18))
+        self.save_source_summaries_label.grid(column=0, row=0)
+
+        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to .docx", command=self.save_summaries_to_docx)
+        self.save_source_summaries_button.grid(column=0, row=1, pady=5)
+
+
     def toggle_source_input(self):
         source_type = self.source_type_var.get()
 
@@ -121,9 +144,9 @@ class ReportGeneratorApp:
 
         # Show the relevant widget based on the source type
         if source_type == "url":
-            self.new_source_url_entry.grid(column=1, row=3, pady=5, padx=5)
+            self.new_source_url_entry.grid(column=1, row=4, pady=5, padx=5)
         elif source_type == "file":
-            self.file_upload_button.grid(column=1, row=3, pady=5, padx=5)
+            self.file_upload_button.grid(column=1, row=4, pady=5, padx=5)
 
     def create_file_upload_button(self):
         # Create a file upload button
@@ -172,6 +195,8 @@ class ReportGeneratorApp:
 
         self.source_list.append({
             "source_title": title,
+            "source_classification": "UNCLASSIFIED",
+            "source_country": self.new_source_country_entry.get(),
             "source_type": self.source_type_var.get(),
             "source_location": self.current_source_location
         })
@@ -294,14 +319,47 @@ class ReportGeneratorApp:
                     model="gpt-3.5-turbo-16k"
                 )
             
-            print(total_summary_object.choices[0].message.content)
+            # print(total_summary_object.choices[0].message.content)
+
+            summary_dict_object = {
+                "source_title": source["source_title"],
+                "source_classification": source["source_classification"],
+                "source_country": source["source_country"],
+                "source_type": source["source_type"],
+                "source_summary": total_summary_object.choices[0].message.content
+            }
+
+            self.summaries.append(summary_dict_object)
+
+            print(f"Done Summarizing Source: {source['source_title']}")
+
+        print("Done summarizing all sources")
 
 
-
-
-
-    
+    def save_summaries_to_docx(self):
+        print("save summaries to word file")
+        self.export_document.add_heading("[MIU or Reporting Highlights]", level=0)
         
+        for summary in self.summaries:
+            classification = self.export_document.add_paragraph()
+            classification.add_run(summary["source_classification"]).bold = True
+            country = self.export_document.add_paragraph()
+            country.add_run(summary["source_country"]).bold = True
+            title = self.export_document.add_paragraph()
+            title.add_run(summary["source_title"]).bold = True
+
+            self.export_document.add_paragraph()
+
+            add_bluf = self.export_document.add_paragraph()
+            add_bluf.add_run("[ADD BLUF]").bold = True
+
+            self.export_document.add_paragraph()
+            summary_label 
+            self.export_document.add_paragraph("Summary: "+summary["source_summary"])
+
+
+        self.export_document.save("ReportTemplate.docx")
+
 
 if __name__ == "__main__":
     root = tk.Tk()
