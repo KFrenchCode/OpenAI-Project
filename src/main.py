@@ -1,5 +1,7 @@
+from string import capwords
 import tkinter as tk
-from tkinter import filedialog
+from tkinter import Canvas as tkCanvas, filedialog
+from click import wrap_text
 from transformers import pipeline, Pipeline, PreTrainedTokenizerFast
 import requests
 from bs4 import BeautifulSoup
@@ -9,6 +11,9 @@ from dotenv import load_dotenv
 import os
 import tiktoken
 from docx import Document
+from reportlab.pdfgen.canvas import Canvas as pdfCanvas
+from reportlab.lib.pagesizes import LETTER
+
 
 load_dotenv()
 
@@ -20,7 +25,7 @@ class ReportGeneratorApp:
         self.root: tk.Tk = root
         self.source_list: list[dict[str, str]] = []
         self.source_widgets: list[tk.Widget] = []
-        self.title: str = "Report Generator v0.1"
+        self.title: str = "Virtual Analyst v0.3"
 
         # Initialize source type variable
         self.source_type_var = tk.StringVar()
@@ -45,9 +50,98 @@ class ReportGeneratorApp:
 
         # Initialize Summaries
         self.summaries: list[dict[str, str]] = []
+        
 
         self.export_document = Document()
+
+        # Initialize Summaries
+        self.summaries: list[dict[str, str]] = []
+
+        # self.root = tk.Tk() 
+        self.export_pdf = pdfCanvas ("ReportTemplate-pdf", pagesize=LETTER)
+
+        def wrap_text(text, width):
+            words = text.split(' ')
+            lines = []
+            current_line = []
+            current_length = 0
+
+            for word in words:
+                word_length = len(word)
+                if current_length + word_length <= width:
+                    current_length += word_length + 1 # Add 1 for the space character
+                    current_line.append(word)
+                else:
+                    lines.append(' '.join(current_line))
+                    current_line = [word]
+                    current_length = word_length + 1
+
+            lines.append(' '.join(current_line))
+
+            return lines
+
+    
+    def save_summaries_to_pdf(self):
+        #filename, sizing
+        print("Saved summaries to PDF")
+        canvas = pdfCanvas("ReportTemplate.pdf", pagesize=LETTER)
+
+        #heading formatting
+        canvas.setFont("Helvetica", 18)
+        canvas.drawString(72,740, "[Intelligence Note or Reporting Highlights]")
+        canvas.setFont("Helvetica", 12)
+        # self.export_pdf.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
+        # pdfCanvas.drawString(72,72, "IN/RH")
         
+        #formatting contents
+        y = 700
+        max_chars_per_line = 50 # Adjust this value as needed
+        for summary in self.summaries:
+
+            classification = summary["source_classification"]
+            country = summary["source_country"]
+            title = summary["source_title"]
+            summary_text = summary["source_summary"]
+            # split the text into lines
+            lines = summary_text.split('\n')
+            lines = wrap_text(summary_text, max_chars_per_line)
+            for i, line in enumerate(lines):
+                canvas.drawString(72, y - i*20, line)
+
+            y -= 60
+
+
+            canvas.drawString(72, y, f"Classification: {classification}")
+            y -= 20
+            canvas.drawString(72, y, f"Country: {country}")
+            y -= 20
+            canvas.drawString(72, y, f"Title: {title}")
+            y -= 20
+            canvas.drawString(72, y, f"{summary_text}")
+            y -= 60
+
+
+
+            # classification = self.export_pdf.add_paragraph()
+            # classification.add_run(summary["source_classification"]).bold = True
+            # # add caps to classification
+            # country = self.export_pdf.add_paragraph()
+            # country.add_run(summary["source_country"]).bold = True
+            # title = self.export_pdf.add_paragraph()
+            # title.add_run(summary["Source Title"]).bold = True
+
+            # self.export_pdf.add_paragraph()
+
+            # self.export_pdf.add_paragraph()
+          
+            # self.export_pdf.add_paragraph(+summary["source_summary"])
+
+            # add_analyst_comment = self.export_pdf.add_paragraph()
+            # add_analyst_comment.add_run("[Analyst Comment]").bold = True
+
+            #save/export option
+
+            canvas.save()
 
     def create_initial_widgets(self):
         # Create title
@@ -131,8 +225,14 @@ class ReportGeneratorApp:
         self.save_source_summaries_label = tk.Label(self.save_source_summaries_frame, text="Save Source", font=("Arial", 18))
         self.save_source_summaries_label.grid(column=0, row=0)
 
+        #Save to DOC
+
         self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to .docx", command=self.save_summaries_to_docx)
         self.save_source_summaries_button.grid(column=0, row=1, pady=5)
+
+        #Save to PDF
+        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PDF", command=self.save_summaries_to_pdf)
+        self.save_source_summaries_button.grid(column=0, row=2, pady=6)
 
 
     def toggle_source_input(self):
@@ -309,7 +409,7 @@ class ReportGeneratorApp:
                     messages=[
                         {
                             "role": "system",
-                            "content": "You are going to act as a summarizer for the following text, giving 5-6 sentences of summarization:"
+                            "content": "You are going to act as a summarizer for the following text, giving 1-2 sentences of summarization which encapsulate the key findings of the text. This will be labelled as the BLUF:, followed by 2-4 sentences with more detail. Use ICD 203 standards:"
                         },
                         {
                             "role": "user",
@@ -338,11 +438,12 @@ class ReportGeneratorApp:
 
     def save_summaries_to_docx(self):
         print("save summaries to word file")
-        self.export_document.add_heading("[MIU or Reporting Highlights]", level=0)
+        self.export_document.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
         
         for summary in self.summaries:
             classification = self.export_document.add_paragraph()
             classification.add_run(summary["source_classification"]).bold = True
+            # add caps to classification
             country = self.export_document.add_paragraph()
             country.add_run(summary["source_country"]).bold = True
             title = self.export_document.add_paragraph()
@@ -350,15 +451,26 @@ class ReportGeneratorApp:
 
             self.export_document.add_paragraph()
 
-            add_bluf = self.export_document.add_paragraph()
-            add_bluf.add_run("[ADD BLUF]").bold = True
+
+             
+            self.export_document.add_paragraph(summary["source_summary"])
+           
+            add_analystc_comment = self.export_document.add_paragraph()
 
             self.export_document.add_paragraph()
-            summary_label 
-            self.export_document.add_paragraph("Summary: "+summary["source_summary"])
+
+            add_analystc_comment.add_run("[Analyst Comment]").bold = True
+            
 
 
         self.export_document.save("ReportTemplate.docx")
+
+
+
+
+
+
+
 
 
 if __name__ == "__main__":
