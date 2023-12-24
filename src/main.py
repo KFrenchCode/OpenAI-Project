@@ -1,5 +1,7 @@
 from string import capwords
 import tkinter as tk
+from tkinter import ttk
+from time import sleep
 from tkinter import Canvas as tkCanvas, filedialog
 from click import wrap_text
 from transformers import pipeline, Pipeline, PreTrainedTokenizerFast
@@ -14,7 +16,10 @@ from docx import Document
 from reportlab.pdfgen.canvas import Canvas as pdfCanvas
 from reportlab.lib.pagesizes import LETTER
 from textwrap import wrap
+import time
+from threading import Thread
 
+#update ability to upload docx on line 217
 
 load_dotenv()
 
@@ -61,26 +66,6 @@ class ReportGeneratorApp:
         # self.root = tk.Tk() 
         self.export_pdf = pdfCanvas ("ReportTemplate-pdf", pagesize=LETTER)
 
-    # def wrap_text(text, width):
-    #         words = text.split(' ')
-    #         lines = []
-    #         current_line = []
-    #         current_length = 0
-
-    #         for word in words:
-    #             word_length = len(word)
-    #             if current_length + word_length <= width:
-    #                 current_length += word_length + 1 # Add 1 for the space character
-    #                 current_line.append(word)
-    #             else:
-    #                 lines.append(' '.join(current_line))
-    #                 current_line = [word]
-    #                 current_length = word_length + 1
-
-    #         lines.append(' '.join(current_line))
-
-    #         return lines
-
     
     def save_summaries_to_pdf(self):
         print("Saved summaries to PDF")
@@ -112,30 +97,10 @@ class ReportGeneratorApp:
             for i, line in enumerate(lines):
                 canvas.drawString(72, y - i*20, line)
             y -= len(lines)*20 + 60
-            y -= 30
+            y -= 0
 
             canvas.drawString(72, y, f"Analyst Comment:")
             y = -20
-
-
-            # classification = self.export_pdf.add_paragraph()
-            # classification.add_run(summary["source_classification"]).bold = True
-            # # add caps to classification
-            # country = self.export_pdf.add_paragraph()
-            # country.add_run(summary["source_country"]).bold = True
-            # title = self.export_pdf.add_paragraph()
-            # title.add_run(summary["Source Title"]).bold = True
-
-            # self.export_pdf.add_paragraph()
-
-            # self.export_pdf.add_paragraph()
-          
-            # self.export_pdf.add_paragraph(+summary["source_summary"])
-
-            # add_analyst_comment = self.export_pdf.add_paragraph()
-            # add_analyst_comment.add_run("[Analyst Comment]").bold = True
-
-            #save/export option
 
             canvas.save()
 
@@ -253,6 +218,7 @@ class ReportGeneratorApp:
         # Open a file dialog to select a file
         self.current_source_location = filedialog.askopenfilename(filetypes=[("PDFs", ".pdf")])
 
+
     def reset_source_inputs(self) -> None:
         self.new_source_title_entry.delete(0, 'end')
         self.new_source_url_entry.delete(0, 'end')
@@ -348,6 +314,22 @@ class ReportGeneratorApp:
         except Exception as e:
             print(f"Error: Unable to extract text from {filename}. {str(e)}")
             raise e
+        
+    def get_text_from_doc(self,filename):
+        try:
+            #Open the Word Doc
+            word_doc = Document(filename)
+            all_text = ""
+
+            for para in word_doc.paragraphs:
+                text = para.text
+
+                all_text += text + '\n'
+
+            return all_text.strip() #removes all leading and trailing whitespaces
+        except Exception as e:
+            print(f"Error: Unable to extract text from {filename}. {str(e)}")
+            raise e 
 
     def summarize(self):
         for source in self.source_list:
@@ -431,6 +413,7 @@ class ReportGeneratorApp:
 
         print("Done summarizing all sources")
 
+        time.sleep(5)
 
     def save_summaries_to_docx(self):
         print("save summaries to word file")
@@ -462,14 +445,43 @@ class ReportGeneratorApp:
         self.export_document.save("ReportTemplate.docx")
 
 
+#creating a loading page
+# def loading_page(app):
+#     def close_loading():
+#         root.destroy()
+
+#     root = tk.Tk()
+#     root.title("Loading Page")
+#     root.geometry("300x200")
+#     root.resizable(False, False)
+
+#     #Create a label for the loading message
+#     loading_label = ttk.Label(root, text="Thinking...", font=("Arial", 14))
+
+#     loading_label.pack(pady=50)
+
+#     #create a progress bar
+#     progress_bar = ttk.Progressbar(root, length=200, mode='indeterminate')
+#     progress_bar.pack()
+
+#     #start the progress bar animation
+#     progress_bar.start(10)
+
+#     #execute the tasks in a seperate thread
+#     thread = Thread(target=app.summarize)
+#     thread.start()
+
+#     #schedule closing the loading window after 5 seconds
+#     root.after(5000, close_loading)
 
 
 
-
-
+#     root.mainloop()
+# loading_page()
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
-    app = ReportGeneratorApp(root)
-    root.mainloop()
+   root = tk.Tk()
+   app = ReportGeneratorApp(root)
+#    loading_page(app)
+   root.mainloop()
