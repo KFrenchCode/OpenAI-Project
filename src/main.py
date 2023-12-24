@@ -13,6 +13,7 @@ import tiktoken
 from docx import Document
 from reportlab.pdfgen.canvas import Canvas as pdfCanvas
 from reportlab.lib.pagesizes import LETTER
+from textwrap import wrap
 
 
 load_dotenv()
@@ -60,66 +61,61 @@ class ReportGeneratorApp:
         # self.root = tk.Tk() 
         self.export_pdf = pdfCanvas ("ReportTemplate-pdf", pagesize=LETTER)
 
-        def wrap_text(text, width):
-            words = text.split(' ')
-            lines = []
-            current_line = []
-            current_length = 0
+    # def wrap_text(text, width):
+    #         words = text.split(' ')
+    #         lines = []
+    #         current_line = []
+    #         current_length = 0
 
-            for word in words:
-                word_length = len(word)
-                if current_length + word_length <= width:
-                    current_length += word_length + 1 # Add 1 for the space character
-                    current_line.append(word)
-                else:
-                    lines.append(' '.join(current_line))
-                    current_line = [word]
-                    current_length = word_length + 1
+    #         for word in words:
+    #             word_length = len(word)
+    #             if current_length + word_length <= width:
+    #                 current_length += word_length + 1 # Add 1 for the space character
+    #                 current_line.append(word)
+    #             else:
+    #                 lines.append(' '.join(current_line))
+    #                 current_line = [word]
+    #                 current_length = word_length + 1
 
-            lines.append(' '.join(current_line))
+    #         lines.append(' '.join(current_line))
 
-            return lines
+    #         return lines
 
     
     def save_summaries_to_pdf(self):
-        #filename, sizing
         print("Saved summaries to PDF")
         canvas = pdfCanvas("ReportTemplate.pdf", pagesize=LETTER)
 
-        #heading formatting
+        # heading formatting
         canvas.setFont("Helvetica", 18)
         canvas.drawString(72,740, "[Intelligence Note or Reporting Highlights]")
         canvas.setFont("Helvetica", 12)
-        # self.export_pdf.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
-        # pdfCanvas.drawString(72,72, "IN/RH")
-        
-        #formatting contents
+            
+        # formatting contents
         y = 700
-        max_chars_per_line = 50 # Adjust this value as needed
+        max_chars_per_line = 90 # Adjust this value as needed
         for summary in self.summaries:
-
             classification = summary["source_classification"]
             country = summary["source_country"]
             title = summary["source_title"]
             summary_text = summary["source_summary"]
-            # split the text into lines
-            lines = summary_text.split('\n')
-            lines = wrap_text(summary_text, max_chars_per_line)
-            for i, line in enumerate(lines):
-                canvas.drawString(72, y - i*20, line)
-
-            y -= 60
-
 
             canvas.drawString(72, y, f"Classification: {classification}")
             y -= 20
             canvas.drawString(72, y, f"Country: {country}")
             y -= 20
             canvas.drawString(72, y, f"Title: {title}")
-            y -= 20
-            canvas.drawString(72, y, f"{summary_text}")
-            y -= 60
+            y -= 40
+            # canvas.drawString(72, y, f"{summary_text}")
+            # split the text into lines
+            lines = wrap(summary_text, width=max_chars_per_line)
+            for i, line in enumerate(lines):
+                canvas.drawString(72, y - i*20, line)
+            y -= len(lines)*20 + 60
+            y -= 30
 
+            canvas.drawString(72, y, f"Analyst Comment:")
+            y = -20
 
 
             # classification = self.export_pdf.add_paragraph()
