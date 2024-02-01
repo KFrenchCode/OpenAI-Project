@@ -1,3 +1,4 @@
+from pprint import pp
 from string import capwords
 import tkinter as tk
 from tkinter import ttk
@@ -5,11 +6,13 @@ from tkinter import *
 from tkinter import Tk, Label, PhotoImage
 from time import sleep
 from tkinter import Canvas as tkCanvas, filedialog
+from tkinter import messagebox
 import tkinter
+from xml.sax.handler import property_xml_string
 from click import wrap_text
 from transformers import pipeline, Pipeline, PreTrainedTokenizerFast, BartTokenizer,BartForConditionalGeneration
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 import fitz
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -24,7 +27,14 @@ from threading import Thread
 import pkg_resources
 import threading
 import queue
+from pptx import Presentation
 
+
+#change background, to dia logo, 
+# #create preview report button (reference def report_window) 
+# finish making pptx
+# create talkng points - maya's prompt
+# joel - header?
 
 # def is_installed(package_name):
 #    try:
@@ -53,14 +63,14 @@ class ReportGeneratorApp:
 
         # Initialize variables
         self.root: tk.Tk = root
-        # self.bg_image = PhotoImage(file = "/Users/kendrafrench/Dev/python-first-steps/appbg.png")
-        #create a label and set the image as its background
-        # bg_label = Label(root, image = self.bg_image)
+        # self.bg_image = PhotoImage(file = "/Users/kendrafrench/Dev/python-first-steps/BG/appbg.png")
+        # #create a label and set the image as its background
+        # bg_label = Label(root, image = self.appbg)
         # bg_label.place(x=0, y=0, relwidth=1, relheight=1)
         self.source_list: list[dict[str, str]] = []
         self.source_widgets: list[tk.Widget] = []
         self.title: str = "Virtual Analyst v0.1"
-        
+       
         # my_canvas = Canvas(root, width= 1200, height = 800)
         # my_canvas.pack(fill="both", expand = True)
 
@@ -84,7 +94,7 @@ class ReportGeneratorApp:
         
         # Initialize OpenAI
         self.client = OpenAI(
-            api_key=os.getenv("VSFS_KEY"),
+            api_key=os.getenv("SHIELDS_KEY"),
         )
 
         # Initialize encoder
@@ -97,8 +107,6 @@ class ReportGeneratorApp:
 
         # self.root = tk.Tk() 
         self.export_pdf = pdfCanvas("ReportTemplate-pdf", pagesize=LETTER)
-
-        self.subtitle: str = "* Please note that this program uses ChatGPT, and as such no classified data should be input through the system."
 
 
     def save_summaries_to_pdf(self):
@@ -296,7 +304,7 @@ class ReportGeneratorApp:
 
         #Save to DOC
         
-        self.sav_button_text_variable = tk.StringVar()
+        self.save_button_text_variable = tk.StringVar()
         self.summarize_button_text_variable.set("Summarize Sources")
         self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to Word Document", command=self.save_summaries_to_docx)
         self.save_source_summaries_button.grid(column=0, row=1, pady=5)
@@ -304,6 +312,19 @@ class ReportGeneratorApp:
         #Save to PDF
         self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PDF", command=self.save_summaries_to_pdf)
         self.save_source_summaries_button.grid(column=0, row=2, pady=6)
+
+         #Save to pptx
+        
+        self.save_pptx_button_text_variable = tk.StringVar()
+        self.summarize_button_text_variable.set("Summarize Sources")
+        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PowerPoint", command=self.save_summaries_to_pptx)
+        self.save_source_summaries_button.grid(column=0, row=3, pady=9)
+
+
+         # Disclaimer Label
+        self.disclaimer_label = tk.Label(self.root, text="     * Please note that this program uses ChatGPT, and as such no classified data should be input through the system. * \n \n"
+                                                                  "    * The analytical standards and writing style used are up to date as of January 2022 but will not update until the system itself is updated.*" , font=("Arial", 14))
+        self.disclaimer_label.grid(column=0, row=5, pady=15)
 
 
 
@@ -530,100 +551,278 @@ class ReportGeneratorApp:
 
             all_summaries_together_text = " ".join(summary_bits)
 
+            #ensures ICD 203 standards
+
             total_summary_object = self.client.chat.completions.create(
-                    messages=[
+        messages=[
                         {
                             "role": "system",
-                            "content": "You are going to act as a summarizer for the following text, giving 1-2 sentences of summarization which encapsulate the key findings of the text. This will be labelled as the BLUF:, followed by 2-4 sentences with more detail. Use relevant intelligence community directives to analyze the text:"
+                            "content": """
+                You are a military analyst. I want you to analyze the given summaries to the standards outlined here.
+                Analytical Evaluation Prompt: Understanding and Applying Analytic Standards in Intelligence Community Reporting
+                1. **Background:**
+                - Explore the foundational legal documents and directives shaping Analytic Standards, such as the National Security Act of 1947, Intelligence Reform and Terrorism Prevention Act of 2004, Executive Order 12333, and Presidential Policy Directive/PPD-28.
 
-                        },
-                        {
-                            "role": "user",
-                            "content": all_summaries_together_text
+                2. **Purpose and Scope:**
+                - Summarize the Intelligence Community Directive (ICD) regarding Analytic Standards, outlining its purpose and specifying its applicability to the Intelligence Community (IC) and elements designated by the President or Director of National Intelligence (DNI).
+
+                3. **Policy Framework:**
+                - Outline the policy framework established by the IC Analytic Standards, highlighting their core principles in intelligence analysis. Discuss the responsibility of IC elements in applying these standards appropriately, considering factors like purpose, source information, production timeline, and customer needs.
+
+                4. **Analytic Tradecraft Standards:**
+                - Detail the nine Analytic Tradecraft Standards, providing foundational assessment criteria for evaluating IC analytic products. Emphasize their significance in maintaining rigor, excellence, and integrity in analytic practice.
+
+                5. **Responsibilities:**
+                - Define the responsibilities of key entities, including the Deputy DNI for Intelligence Integration (DDNI/II) and the Chief, Analytic Integrity and Standards Group (ODNI Analytic Ombuds). Highlight the DDNI/II's role in directing the application of Analytic Standards, overseeing periodic reviews, and refining the evaluation program.
+
+                6. **Confidentiality and Conflict Resolution:**
+                - Explain the role of the ODNI Analytic Ombuds in addressing concerns raised by analysts about adherence to standards. Emphasize the confidentiality of the process, allowing analysts to voice concerns without fear of reprisal, with exceptions for significant misconduct or legal violations.
+
+                7. **Implementation by IC Elements:**
+                - Discuss the responsibilities of Heads of IC elements in ensuring the proper application of Analytic Standards. Highlight the designation of individuals or offices within IC elements to respond to analyst concerns, emphasizing the importance of internal reviews and evaluations.
+
+                8. **Training and Education:**
+                - Emphasize the role of Analytic Standards in guiding education and training programs within IC elements. Stress the need for ongoing improvement based on lessons learned from analytic product evaluations.
+
+                9. **Assessment Criteria:**
+                - Establish criteria for assessing the effectiveness of Analytic Standards in maintaining objectivity, avoiding bias, ensuring timeliness, incorporating all available sources, and exhibiting clear and logical argumentation.
+
+                10. **Recommendations for Improvement:**
+                    - Propose measures for improving the application of Analytic Standards, addressing any identified challenges or gaps in adherence. Consider potential enhancements to education and training programs and the resolution of concerns raised through the Ombuds process.
+                """
                         }
-                    ],
-                    model="gpt-3.5-turbo-16k"
+                    ]
                 )
-            
-            # Create Citation
-            source_overall_classification = source['source_overall_classification']
-            source_cit_let = source_overall_classification[0] if source_overall_classification else ''
 
-            current_datetime = datetime.datetime.now()
-            date_accessed = current_datetime.strftime("%d/%m/%Y")
-            source_citation = f"({source_cit_let});{source['source_originator']}; {source['source_country']}; {source['source_date_of_publication']}; ({source['source_classification']}) {source['source_title']}; Classification of extracted information is {source['source_portion_classification']}; Overall classification: {source['source_overall_classification']}, {date_accessed}"
-
-            summary_dict_object = {
-                "source_title": source["source_title"],
-                "source_classification": source["source_classification"],
-                "source_country": source["source_country"],
-                "source_type": source["source_type"],
-                "source_summary": total_summary_object.choices[0].message.content,
-                "source_citation": source_citation
+            {
+                "role": "user",
+                "content": all_summaries_together_text
             }
 
-            self.summaries.append(summary_dict_object)
+    model="gpt-3.5-turbo-16k"
 
-            print(f"Done Summarizing Source: {source['source_title']}")
 
-            print("Done summarizing all sources")
-            self.summarize_button_text_variable.set("Sources Summarized")
-            self.summarize_button["state"]=tk.NORMAL
+# object_analytic_standards = self.client.chat.completions.create(
+# messages=[
+#                 {
+#                 "role": "system",
+#                 "content": """
+#                 """
+#             },
+#             {
+#                 "role": "user",
+#                 "content": total_summary_object
+#             }
+#         ],
+#         model="gpt-3.5-turbo-16k"
+# )
+    # # Extract the generated text from the response
+    # object_analytic_standards = object_analytic_standards_response['choices'][0]['text'].strip()
 
-            # Call loading_page from the main thread
-            # threading.Timer(0, loading_page, args=(self, self.summarize)).start()
+#creates formatting for report
+summary_object_formatting = self.client.chat.completions.create(
+messages=[
+                    {
+                        "role": "system",
+                        "content": """
+                        You are a military analyst. Internalize the following Morning Intelligence Update (MIU) format in the order provided. You must not write anything until I prompt you.
+
+                        Here's the format: 
+
+                        Unclassified
+
+                        (U): COUNTRY | APLE | Virtual Analyst | DD Month YYYY
+
+                        Notes: “(U)” stands for unclassified, “COUNTRY” should be substituted in each MIU based on the topic of the text you read for instance ISRAEL etc: you do not need the word COUNTRY in the actual header., “APLE | Virtual Analyst” stays the same regardless of MIU topic, “ DD Month YYYY” stands for current day, month, and year ex: 01 January 2024
+
+                        Below this is a paragraph of no more than seven sentences: 
+
+                        (U) The first sentence or “BLUF” aka Bottom Line Up Front should be written in bold, should capture the main issue or development that is of interest to the CENTCOM Commander (the “what”); Write the BLUF in this style: “On DD MON, event or action happened, according to news agency.” Pay attention that the “On DD MON” is the event’s date, not today’s date. If the day is not provided, provide the month, if the month is not provided at least provide the year. 
+                        Summarize the text in seven sentences 
+                        Sentences must be less than 21 words. 
+                        MIU Format should contain no headers except for “(U): COUNTRY | APLE | Virtual Analyst | DD Month YYYY”
+                        Only the first sentence, the BLUF, should be bolded. 
+                        Important: sentences should follow right after another and not have spaces in between. 
+                        The most important thing of this whole MIU is each sentence must follow the other and be connected into one large paragraph. 
+                        The second most important thing is that only the second sentence is bolded and in emphasis. 
+                        should not be written in bold or emphasis. Sentences cannot be more than 20 words. You may only write six sentences after the BLUF.
+                        The MIU Content Paragraph must be one, connected paragraph, no spaces, beginning with the BLUF in bold and ending with an assessment explaining why the development or event matters. 
+
+                        The sentences must elaborate and develop the main issue of an event, and must be drawn primarily from reporting of the main issue of an event. Do not summarize the entire source since you only have six sentences after the BLUF to use. Do not overuse adjectives and adverbs. The final sentence must contain an assessment explaining why the development matters to the CENTCOM Commander (the “so What” aka the main issue).
+                        The MIU Content Paragraph must be one, connected paragraph, no spaces, beginning with the BLUF in bold and ending with the assessment explaining why the development or event matters. 
+
+                        Note: need the heading / last sentence should be part of the paragraph need as one whole thing 
+                        Find an example utilizing DIA standard as a reference.
+                        """
+                    },
+                    {
+                        "role": "user",
+                        "content": total_summary_object.choices[0].message.content
+                    }
+                ],
+        model="gpt-3.5-turbo-16k"
+        )
+
+        # total_summary_object.choices[0].message.content + "\n\n" + object_analytic_standards.choices[0].message.content
+        # summary_object_formatting.append(object_analytic_standards.choices[0].message.content.replace("\n", " "))
+
+        # summary_object_formatting = " ".join(object_analytic_standards)
+
+                    
+            # Create Citation
+        source_overall_classification = source['source_overall_classification']
+        source_cit_let = source_overall_classification[0] if source_overall_classification else ''
+
+        current_datetime = datetime.datetime.now()
+        date_accessed = current_datetime.strftime("%d/%m/%Y")
+        source_citation = f"({source_cit_let});{source['source_originator']}; {source['source_country']}; {source['source_date_of_publication']}; ({source['source_classification']}) {source['source_title']}; Classification of extracted information is {source['source_portion_classification']}; Overall classification: {source['source_overall_classification']}, {date_accessed}"
+
+        summary_dict_object = {
+            "source_title": source["source_title"],
+            "source_classification": source["source_classification"],
+            "source_country": source["source_country"],
+            "source_type": source["source_type"],
+            "source_summary": total_summary_object.choices[0].message.content,
+            "source_citation": source_citation
+        }
+
+        self.summaries.append(summary_dict_object)
+
+
+
+        print(f"Done Summarizing Source: {source['source_title']}")
+
+        print("Done summarizing all sources")
+        self.summarize_button_text_variable.set("Sources Summarized")
+        self.summarize_button["state"]=tk.NORMAL
+
+# Call loading_page from the main thread
+# threading.Timer(0, loading_page, args=(self, self.summarize)).start()
+    
+
+def combine_summaries(self, summaries):
+    # Combine all summaries into one final summary
+    final_summary = " ".join(summaries)
+    return final_summary
+
+
+def save_summaries_to_docx(self):
+    self.summarize_button_text_variable.set("Thinking...")
+    self.summarize_button["state"]=tk.DISABLED
+
+    print("Report Saved to Word File")
+    self.export_document.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
+    for summary in self.summaries:
+        classification = self.export_document.add_paragraph()
+        classification.add_run(summary["source_classification"]).bold = True
+        # add caps to classification
+        country = self.export_document.add_paragraph()
+        country.add_run(summary["source_country"]).bold = True
+        title = self.export_document.add_paragraph()
+        title.add_run(summary["source_title"]).bold = True
+
+        self.export_document.add_paragraph()
+
             
+        self.export_document.add_paragraph(summary["source_summary"])
+        
+        add_analystc_comment = self.export_document.add_paragraph()
 
-    def combine_summaries(self, summaries):
-        # Combine all summaries into one final summary
-        final_summary = " ".join(summaries)
-        return final_summary
+        self.export_document.add_paragraph()
 
+        add_analystc_comment.add_run("[Analyst Comment]").bold = True
 
-    def save_summaries_to_docx(self):
-        self.summarize_button_text_variable.set("Thinking...")
-        self.summarize_button["state"]=tk.DISABLED
-
-        print("Report Saved to Word File")
-        self.export_document.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
-        for summary in self.summaries:
-            classification = self.export_document.add_paragraph()
-            classification.add_run(summary["source_classification"]).bold = True
-            # add caps to classification
-            country = self.export_document.add_paragraph()
-            country.add_run(summary["source_country"]).bold = True
-            title = self.export_document.add_paragraph()
-            title.add_run(summary["source_title"]).bold = True
-
-            self.export_document.add_paragraph()
-
-                
-            self.export_document.add_paragraph(summary["source_summary"])
-            
-            add_analystc_comment = self.export_document.add_paragraph()
-
-            self.export_document.add_paragraph()
-
-            add_analystc_comment.add_run("[Analyst Comment]").bold = True
-
-            citation = self.export_document.add_paragraph()
-            citation.add_run(summary["source_citation"])
+        citation = self.export_document.add_paragraph()
+        citation.add_run(summary["source_citation"])
 
 
-            self.summarize_button_text_variable.set("Document Saved")
-            self.summarize_button["state"]=tk.NORMAL
-
-            
-        # Export a document loading page
-        # Call loading_page from the main thread
-        # threading.Timer(0, loading_page, args=(self, self.save_summaries_to_docx)).start()
+        self.summarize_button_text_variable.set("Document Saved")
+        self.summarize_button["state"]=tk.NORMAL
 
         
+    # Export a document loading page
+    # Call loading_page from the main thread
+    # threading.Timer(0, loading_page, args=(self, self.save_summaries_to_docx)).start()
+
+    
 
 
         self.export_document.save("ReportTemplate.docx")
         self.summarize_button_text_variable.set("Summarize Sources")
         self.summarize_button["state"]=tk.NORMAL
+
+
+# creates window to view report in. 
+        # def report_window():
+        #     popup = tk.Toplevel(root)
+        #     popup.title("Virtual Analyst Report")
+            
+        #     # Add widgets to the popup window
+        #     label = tk.Label(popup, text = summary["source_summary"])
+        #     label.pack(padx=10, pady=10)
+            
+        #     ok_button = tk.Button(popup, text="OK", command=popup.destroy)
+        #     ok_button.pack(pady=10)
+
+        # # Create the main Tkinter window
+        # root = tk.Tk()
+        # root.title("Report Preview")
+
+        # # Create a button to trigger the popup window
+        # popup_button = tk.Button(root, text="Preview Report", command=report_window)
+        # popup_button.pack(pady=20)
+
+        # # Run the Tkinter main loop
+        # root.mainloop()
+
+
+
+
+
+    # def save_summaries_to_pptx(self):
+    #     self.summarize_button_text_variable.set("Thinking...")
+    #     self.summarize_button["state"]=tk.DISABLED
+
+    #     prs = Presentation()
+
+    #     print("Report Saved to PowerPoint File")
+    #     title_slide_layout = prs.slide_layouts[0]
+    #     slide = prs.slides.add_slide(title_slide_layout)
+    #     title = slide.shapes.title
+    #     subtitle = slide.placeholders[1]
+
+    #     title.text = "[Intelligence Note or Reporting Highlights]"
+    #     subtitle.text = datetime, "CCJ2 APLE:"
+
+        # for summary in self.summaries:
+        #     slide_layout = prs.slide_layouts[1]
+        #     slide = prs.slides.add_slide(slide_layout)
+        #     shapes = slide.shapes
+        #     title_shape = shapes.title
+        #     content_shape = shapes.placeholders[1]
+            
+
+        #     title_shape.text = summary["source_title"]
+        #     content_shape.text = summary["source_summary"]
+            
+        #     textbox = slide.shapes[0]
+
+        #     text_frame = textbox.text_frame
+        #     text_frame.add_paragraph(content_shape.text)
+
+        #     endnotes_slide = slide.notes_slide
+        #     notes_text_frame = endnotes_slide.notes_text_frame
+
+        #     citation = "Endnotes:"
+        #     notes_text_frame.add_paragraph().add_run(citation).font.size = (10)
+
+        # prs.save("ReportTemplate.pptx")
+        # self.summarize_button_text_variable.set("PowerPoint Saved")
+        # self.summarize_button["state"] = tk.NORMAL
+
+
+
+
 
 # # Define root as a Tkinter window
 # root = tkinter.Tk()
