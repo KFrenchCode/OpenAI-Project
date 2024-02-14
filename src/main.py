@@ -28,12 +28,14 @@ import pkg_resources
 import threading
 import queue
 from pptx import Presentation
+from tkinter import messagebox
 
 
-#change background, to dia logo, 
-# #create preview report button (reference def report_window) 
-# finish making pptx
-# create talkng points - maya's prompt
+#change background, to logo, 
+# ats view button 
+# ATS
+# langchain 
+# google drive
 # joel - header?
 
 # def is_installed(package_name):
@@ -48,7 +50,7 @@ from pptx import Presentation
 # is_installed('python-docx')
 
 
-#BG (blue = #032C50), + image in python-first-steps, bg.  
+#BG (blue = #1361A6), + image in python-first-steps, bg.  
 
 tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
 model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
@@ -60,24 +62,21 @@ load_dotenv()
 class ReportGeneratorApp:
     def __init__(self, root):
 
-
+        self.window = root
         # Initialize variables
         self.root: tk.Tk = root
-        # self.bg_image = PhotoImage(file = "/Users/kendrafrench/Dev/python-first-steps/BG/appbg.png")
-        # #create a label and set the image as its background
-        # bg_label = Label(root, image = self.appbg)
-        # bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        self.bg_image = PhotoImage(file="/Users/kendrafrench/Dev/python-first-steps/BG/bgfinal.png")
+        # create a label 
+        bg_label = Label(root, image = self.bg_image)
+        bg_label.place(x=0,y=0, relwidth=1,relheight=1)
+
         self.source_list: list[dict[str, str]] = []
         self.source_widgets: list[tk.Widget] = []
-        self.title: str = "Virtual Analyst v0.1"
+        self.title: str = "CCJ2-APLE Virtual Analyst"
+
+        
+        
        
-        # my_canvas = Canvas(root, width= 1200, height = 800)
-        # my_canvas.pack(fill="both", expand = True)
-
-        # my_canvas.create_image(0,0 image=bg, anchor = "nw")
-
-        # # https://www.youtube.com/watch?v=WurCpmHtQc4
-
 
         # Initialize source type variable
         self.source_type_var = tk.StringVar()
@@ -164,22 +163,69 @@ class ReportGeneratorApp:
             # Call loading_page from the main thread
             # threading.Timer(0, loading_page, args=(self, self.save_summaries_to_pdf)).start()
 
+            
+
+    def save_summaries_to_docx(self):
+        self.summarize_button_text_variable.set("Thinking...")
+        self.summarize_button["state"]=tk.DISABLED
+
+        print("Report Saved to Word File")
+        self.export_document.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
+        for summary in self.summaries:
+            classification = self.export_document.add_paragraph()
+            classification.add_run(summary["source_classification"]).bold = True
+            # add caps to classification
+            country = self.export_document.add_paragraph()
+            country.add_run(summary["source_country"]).bold = True
+            title = self.export_document.add_paragraph()
+            title.add_run(summary["source_title"]).bold = True
+
+            self.export_document.add_paragraph()
+
+                
+            self.export_document.add_paragraph(summary["source_summary"])
+            
+            add_analystc_comment = self.export_document.add_paragraph()
+
+            self.export_document.add_paragraph()
+
+            add_analystc_comment.add_run("[Analyst Comment]").bold = True
+
+            citation = self.export_document.add_paragraph()
+            citation.add_run(summary["source_citation"])
+
+
+            self.summarize_button_text_variable.set("Document Saved")
+            self.summarize_button["state"]=tk.NORMAL
+
+            
+        # Export a document loading page
+        # Call loading_page from the main thread
+        # threading.Timer(0, loading_page, args=(self, self.save_summaries_to_docx)).start()
+
+        
+
+
+            self.export_document.save("ReportTemplate.docx")
+            self.summarize_button_text_variable.set("Summarize Sources")
+            self.summarize_button["state"]=tk.NORMAL
+
 
     def create_initial_widgets(self):
         # Create title
-        title_label = tk.Label(self.root, text=self.title, font=("Arial", 25))
+        title_label = tk.Label(self.root, text=self.title, font=("Arial", 25),bg="#1361A6")
         title_label.grid(column=0, row=0)
 
         # New Source Label
-        self.source_list_label = tk.Label(self.root, text="Add Source", font=("Arial", 18))
+        self.source_list_label = tk.Label(self.root, text="Add Source", font=("Arial", 18), bg="#1361A6")
         self.source_list_label.grid(column=0, row=1)
 
         # Create first source frame
-        new_source_frame = tk.Frame(self.root)
+        new_source_frame = tk.Frame(self.root, bg="#1361A6")
         new_source_frame.grid(column=0, row=2)
 
         # Title of Source Label
-        new_source_title_label = tk.Label(new_source_frame, text="Title of Source:", font=("Arial", 12), width=50)
+        new_source_title_label = tk.Label(new_source_frame, text="Title of Source:", font=("Arial", 12), width=50,bg="#1361A6")
         new_source_title_label.grid(column=0, row=0, pady=5)
 
         # Title of Source Entry
@@ -187,7 +233,7 @@ class ReportGeneratorApp:
         self.new_source_title_entry.grid(column=1, row=0, pady=5)
 
         # Country of Source Label
-        new_source_country_label = tk.Label(new_source_frame, text="Country of Source:", font=("Arial", 12), width=50)
+        new_source_country_label = tk.Label(new_source_frame, text="Country of Source:", font=("Arial", 12), width=50,bg="#1361A6")
         new_source_country_label.grid(column=0, row=1, pady=5)
 
         # Country of Source Entry
@@ -195,22 +241,22 @@ class ReportGeneratorApp:
         self.new_source_country_entry.grid(column=1, row=1, pady=5)
 
         # Source Type Label
-        source_type_label = tk.Label(new_source_frame, text="Source Type:", font=("Arial", 12))
+        source_type_label = tk.Label(new_source_frame, text="Source Type:", font=("Arial", 12),bg="#1361A6")
         source_type_label.grid(column=0, row=2, pady=5)
 
         # Radio button for URL
-        self.source_type_url = tk.Radiobutton(new_source_frame, text="URL", variable=self.source_type_var, value="url", command=self.toggle_source_input)
+        self.source_type_url = tk.Radiobutton(new_source_frame, text="URL", bg="#1361A6", variable=self.source_type_var, value="url", command=self.toggle_source_input) 
         self.source_type_url.grid(column=1, row=2, pady=5)
 
         # Radio button for File
-        self.source_type_file = tk.Radiobutton(new_source_frame, text="File", variable=self.source_type_var, value="file", command=self.toggle_source_input)
+        self.source_type_file = tk.Radiobutton(new_source_frame, text="File", bg="#1361A6", variable=self.source_type_var, value="file", command=self.toggle_source_input)
         self.source_type_file.grid(column=1, row=3, pady=5)
 
         # Initially, set the source type to URL
         self.source_type_var.set("url")
 
         # URL of Source Label
-        new_source_url_label = tk.Label(new_source_frame, text="URL:", font=("Arial", 12))
+        new_source_url_label = tk.Label(new_source_frame, text="URL:", font=("Arial", 12), bg="#1361A6")
         new_source_url_label.grid(column=0, row=4, pady=5)
 
         # # URL of Source Entry
@@ -218,13 +264,13 @@ class ReportGeneratorApp:
         self.new_source_url_entry.grid(column=1, row=4, pady=5)
 
         # # File Upload Button
-        self.file_upload_button = tk.Button(new_source_frame, text="Select File", command=self.upload_file)
+        self.file_upload_button = tk.Button(new_source_frame, text="Select File", bg="#1361A6", command=self.upload_file)
         # self.file_upload_button.grid(column=0, row=4, pady=5)
 
         # (Endnote classification) Originator; Source identifier; Date of publication; (skipping 1/17) Date of information [optional but preferred]; (Classification of title/subject) Title/Subject; (skipping 1/17) Page/paragraph or portion indicator [required when applicable]; Classification of extracted information is “X”; Overall classification is “X”; Access date.
 
         # URL of Source Label
-        originator_label = tk.Label(new_source_frame, text="Originator:", font=("Arial", 12))
+        originator_label = tk.Label(new_source_frame, text="Originator:", font=("Arial", 12), bg="#1361A6")
         originator_label.grid(column=0, row=5, pady=5)
 
         # Originator Entry
@@ -232,7 +278,7 @@ class ReportGeneratorApp:
         self.originator_entry.grid(column=1, row=5, pady=5)
 
         # Date of Publication Label
-        date_publication_label = tk.Label(new_source_frame, text="Date of Publication:", font=("Arial", 12))
+        date_publication_label = tk.Label(new_source_frame, text="Date of Publication:", font=("Arial", 12), bg="#1361A6")
         date_publication_label.grid(column=0, row=6, pady=5)
 
         # Date of Publication Entry
@@ -247,7 +293,7 @@ class ReportGeneratorApp:
         ]
 
         # Class. Title Label
-        classification_title_label = tk.Label(new_source_frame, text="Classification of Subject/Title:", font=("Arial", 12))
+        classification_title_label = tk.Label(new_source_frame, text="Classification of Subject/Title:", font=("Arial", 12),bg="#1361A6")
         classification_title_label.grid(column=0, row=7, pady=5)
 
         # Class. Title Entry
@@ -256,7 +302,7 @@ class ReportGeneratorApp:
         self.classification_title.grid(column=1, row=7, pady=5)
 
         # Class. Title Label
-        portion_classification_label = tk.Label(new_source_frame, text="Classification of Portion:", font=("Arial", 12))
+        portion_classification_label = tk.Label(new_source_frame, text="Classification of Portion:", font=("Arial", 12),bg="#1361A6")
         portion_classification_label.grid(column=0, row=8, pady=5)
 
         # Class. Portion Entry
@@ -265,7 +311,7 @@ class ReportGeneratorApp:
         self.portion_classification.grid(column=1, row=8, pady=5)
 
         # Class. Title Label
-        overall_classification_label = tk.Label(new_source_frame, text="Overall Classification:", font=("Arial", 12))
+        overall_classification_label = tk.Label(new_source_frame, text="Overall Classification:", font=("Arial", 12),bg="#1361A6")
         overall_classification_label.grid(column=0, row=9, pady=5)
 
         # Class. Overall Entry
@@ -275,55 +321,63 @@ class ReportGeneratorApp:
 
 
         # Submit Button
-        new_source_submit = tk.Button(new_source_frame, text="Add Source", command=self.add_new_source_command)
+        new_source_submit = tk.Button(new_source_frame, text="Add Source", bg="#1361A6", command=self.add_new_source_command)
         new_source_submit.grid(column=0, row=10, pady=5)
 
 
         #Source List Label
-        self.source_list_label = tk.Label(self.root, text="Source List", font=("Arial", 18), width=50)
+        self.source_list_label = tk.Label(self.root, text="Source List", font=("Arial", 18), bg="#1361A6", width=50)
         self.source_list_label.grid(column=1, row=1)
 
         # Source List Frame
-        self.source_list_frame = tk.Frame(self.root)
+        self.source_list_frame = tk.Frame(self.root,bg="#1361A6")
         self.source_list_frame.grid(column=1, row=2, sticky="nsew")
 
         # Summarize Button
         self.summarize_button_text_variable = tk.StringVar()
         self.summarize_button_text_variable.set("Summarize Sources")
-        self.summarize_button = tk.Button(self.root, textvariable=self.summarize_button_text_variable, command=self.summarize)
+        self.summarize_button = tk.Button(self.root, textvariable=self.summarize_button_text_variable, bg="#1361A6", command=self.summarize)
         self.summarize_button.grid(column=0, row=3)
 
 
         # Save Summaries Frame 
-        self.save_source_summaries_frame = tk.Frame(self.root)
+        self.save_source_summaries_frame = tk.Frame(self.root, bg="#1361A6")
         self.save_source_summaries_frame.grid(column=0, row=4)
 
         # New Source Label
-        self.save_source_summaries_label = tk.Label(self.save_source_summaries_frame, text="Save Source", font=("Arial", 14))
+        self.save_source_summaries_label = tk.Label(self.save_source_summaries_frame, text="Save Source", font=("Arial", 16),bg="#1361A6")
         self.save_source_summaries_label.grid(column=0, row=0)
 
         #Save to DOC
         
         self.save_button_text_variable = tk.StringVar()
         self.summarize_button_text_variable.set("Summarize Sources")
-        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to Word Document", command=self.save_summaries_to_docx)
+        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to Word Document", bg="#1361A6", command=self.save_summaries_to_docx)
         self.save_source_summaries_button.grid(column=0, row=1, pady=5)
 
         #Save to PDF
-        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PDF", command=self.save_summaries_to_pdf)
-        self.save_source_summaries_button.grid(column=0, row=2, pady=6)
+        self.save_source_summaries_button_pdf = tk.Button(self.save_source_summaries_frame, text="Save to PDF",bg="#1361A6", command=self.save_summaries_to_pdf)
+        self.save_source_summaries_button_pdf.grid(column=0, row=2, pady=6)
 
          #Save to pptx
         
-        self.save_pptx_button_text_variable = tk.StringVar()
-        self.summarize_button_text_variable.set("Summarize Sources")
-        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PowerPoint", command=self.save_summaries_to_pptx)
-        self.save_source_summaries_button.grid(column=0, row=3, pady=9)
+        # self.save_pptx_button_text_variable = tk.StringVar()
+        # self.summarize_button_text_variable.set("Summarize Sources")
+        # self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PowerPoint", command=self.save_summaries_to_pptx)
+        # self.save_source_summaries_button.grid(column=0, row=3, pady=9)
+
+        #Preview Report
+        self.preview_report_button = tk.Button(self.save_source_summaries_frame, text="Preview Report", bg="#1361A6", command=self.popup)
+        self.preview_report_button.grid(column=0, row=2, pady=6)
+
+        # # Use ATS Button
+        # self.use_ats_button = tk.Button(self.save_source_summaries_frame, text = "Would you like to include the ATS?", command=self.ats_popup)
+        # self.use_ats_button.grid(column=0, row=2, pady=6)
 
 
          # Disclaimer Label
         self.disclaimer_label = tk.Label(self.root, text="     * Please note that this program uses ChatGPT, and as such no classified data should be input through the system. * \n \n"
-                                                                  "    * The analytical standards and writing style used are up to date as of January 2022 but will not update until the system itself is updated.*" , font=("Arial", 14))
+                                                                  "    * The analytical standards and writing style used are up to date as of January 2022 but will not update until the system itself is updated.*" , font=("Arial", 14), bg="#1361A6") 
         self.disclaimer_label.grid(column=0, row=5, pady=15)
 
 
@@ -344,7 +398,7 @@ class ReportGeneratorApp:
 
     def create_file_upload_button(self):
         # Create a file upload button
-        self.file_upload_button = tk.Button(self.root, text="Select File", command=self.upload_file)
+        self.file_upload_button = tk.Button(self.root, text="Select File", bg="#1361A6",command=self.upload_file)
         self.file_upload_button.grid(row=4, pady=5, padx=5)
 
     def upload_file(self):
@@ -373,7 +427,7 @@ class ReportGeneratorApp:
             source_title = source["source_title"]
             
             # Source List Item Title
-            source_list_title = tk.Label(self.source_list_frame, text=source_title, font=("Arial", 12))
+            source_list_title = tk.Label(self.source_list_frame, text=source_title, font=("Arial", 12),bg="#1361A6")
             source_list_title.grid(column=0, row=i, sticky="w")
 
             # Delete Button
@@ -549,85 +603,90 @@ class ReportGeneratorApp:
 
                 summary_bits.append(summary_object.choices[0].message.content.replace("\n", " "))
 
-            all_summaries_together_text = " ".join(summary_bits)
+                all_summaries_together_text = " ".join(summary_bits)
 
             #ensures ICD 203 standards
 
             total_summary_object = self.client.chat.completions.create(
-        messages=[
-                        {
-                            "role": "system",
-                            "content": """
-                You are a military analyst. I want you to analyze the given summaries to the standards outlined here.
-                Analytical Evaluation Prompt: Understanding and Applying Analytic Standards in Intelligence Community Reporting
-                1. **Background:**
-                - Explore the foundational legal documents and directives shaping Analytic Standards, such as the National Security Act of 1947, Intelligence Reform and Terrorism Prevention Act of 2004, Executive Order 12333, and Presidential Policy Directive/PPD-28.
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "You are going to act as a summarizer for the following text, giving 1-2 sentences of summarization which encapsulate the key findings of the text. This will be labelled as the BLUF:, followed by 2-4 sentences with more detail. Use relevant intelligence community directives to analyze the text:"
 
-                2. **Purpose and Scope:**
-                - Summarize the Intelligence Community Directive (ICD) regarding Analytic Standards, outlining its purpose and specifying its applicability to the Intelligence Community (IC) and elements designated by the President or Director of National Intelligence (DNI).
+                    },
+                    {
+                        "role": "user",
+                        "content": all_summaries_together_text
+                    }
+                ],
+                model="gpt-3.5-turbo-16k"
+            )
 
-                3. **Policy Framework:**
-                - Outline the policy framework established by the IC Analytic Standards, highlighting their core principles in intelligence analysis. Discuss the responsibility of IC elements in applying these standards appropriately, considering factors like purpose, source information, production timeline, and customer needs.
-
-                4. **Analytic Tradecraft Standards:**
-                - Detail the nine Analytic Tradecraft Standards, providing foundational assessment criteria for evaluating IC analytic products. Emphasize their significance in maintaining rigor, excellence, and integrity in analytic practice.
-
-                5. **Responsibilities:**
-                - Define the responsibilities of key entities, including the Deputy DNI for Intelligence Integration (DDNI/II) and the Chief, Analytic Integrity and Standards Group (ODNI Analytic Ombuds). Highlight the DDNI/II's role in directing the application of Analytic Standards, overseeing periodic reviews, and refining the evaluation program.
-
-                6. **Confidentiality and Conflict Resolution:**
-                - Explain the role of the ODNI Analytic Ombuds in addressing concerns raised by analysts about adherence to standards. Emphasize the confidentiality of the process, allowing analysts to voice concerns without fear of reprisal, with exceptions for significant misconduct or legal violations.
-
-                7. **Implementation by IC Elements:**
-                - Discuss the responsibilities of Heads of IC elements in ensuring the proper application of Analytic Standards. Highlight the designation of individuals or offices within IC elements to respond to analyst concerns, emphasizing the importance of internal reviews and evaluations.
-
-                8. **Training and Education:**
-                - Emphasize the role of Analytic Standards in guiding education and training programs within IC elements. Stress the need for ongoing improvement based on lessons learned from analytic product evaluations.
-
-                9. **Assessment Criteria:**
-                - Establish criteria for assessing the effectiveness of Analytic Standards in maintaining objectivity, avoiding bias, ensuring timeliness, incorporating all available sources, and exhibiting clear and logical argumentation.
-
-                10. **Recommendations for Improvement:**
-                    - Propose measures for improving the application of Analytic Standards, addressing any identified challenges or gaps in adherence. Consider potential enhancements to education and training programs and the resolution of concerns raised through the Ombuds process.
-                """
-                        }
-                    ]
-                )
-
-            {
-                "role": "user",
-                "content": all_summaries_together_text
-            }
-
-    model="gpt-3.5-turbo-16k"
+            summary_object_analytical_standards = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """
+                        You are an intelligence analyst. Utilize the following analytic standards to review the summary reporting object. Analytical Evaluation Prompt: Understanding and Applying Analytic Standards in Intelligence Community Reporting
 
 
-# object_analytic_standards = self.client.chat.completions.create(
-# messages=[
-#                 {
-#                 "role": "system",
-#                 "content": """
-#                 """
-#             },
-#             {
-#                 "role": "user",
-#                 "content": total_summary_object
-#             }
-#         ],
-#         model="gpt-3.5-turbo-16k"
-# )
-    # # Extract the generated text from the response
-    # object_analytic_standards = object_analytic_standards_response['choices'][0]['text'].strip()
+                            1. **Background:**
+                            - Explore the foundational legal documents and directives shaping Analytic Standards, such as the National Security Act of 1947, Intelligence Reform and Terrorism Prevention Act of 2004, Executive Order 12333, and Presidential Policy Directive/PPD-28.
 
-#creates formatting for report
-summary_object_formatting = self.client.chat.completions.create(
-messages=[
+
+                            2. **Purpose and Scope:**
+                            - Summarize the Intelligence Community Directive (ICD) regarding Analytic Standards, outlining its purpose and specifying its applicability to the Intelligence Community (IC) and elements designated by the President or Director of National Intelligence (DNI).
+
+
+                            3. **Policy Framework:**
+                            - Outline the policy framework established by the IC Analytic Standards, highlighting their core principles in intelligence analysis. Discuss the responsibility of IC elements in applying these standards appropriately, considering factors like purpose, source information, production timeline, and customer needs.
+
+
+                            4. **Analytic Tradecraft Standards:**
+                            - Detail the nine Analytic Tradecraft Standards, providing foundational assessment criteria for evaluating IC analytic products. Emphasize their significance in maintaining rigor, excellence, and integrity in analytic practice.
+
+
+                            5. **Responsibilities:**
+                            - Define the responsibilities of key entities, including the Deputy DNI for Intelligence Integration (DDNI/II) and the Chief, Analytic Integrity and Standards Group (ODNI Analytic Ombuds). Highlight the DDNI/II's role in directing the application of Analytic Standards, overseeing periodic reviews, and refining the evaluation program.
+
+
+                            6. **Confidentiality and Conflict Resolution:**
+                            - Explain the role of the ODNI Analytic Ombuds in addressing concerns raised by analysts about adherence to standards. Emphasize the confidentiality of the process, allowing analysts to voice concerns without fear of reprisal, with exceptions for significant misconduct or legal violations.
+
+
+                            7. **Implementation by IC Elements:**
+                            - Discuss the responsibilities of Heads of IC elements in ensuring the proper application of Analytic Standards. Highlight the designation of individuals or offices within IC elements to respond to analyst concerns, emphasizing the importance of internal reviews and evaluations.
+
+
+                            8. **Training and Education:**
+                            - Emphasize the role of Analytic Standards in guiding education and training programs within IC elements. Stress the need for ongoing improvement based on lessons learned from analytic product evaluations.
+
+
+                            9. **Assessment Criteria:**
+                            - Establish criteria for assessing the effectiveness of Analytic Standards in maintaining objectivity, avoiding bias, ensuring timeliness, incorporating all available sources, and exhibiting clear and logical argumentation.
+
+
+                            10. **Recommendations for Improvement:**
+                                - Propose measures for improving the application of Analytic Standards, addressing any identified challenges or gaps in adherence. Consider potential enhancements to education and training programs and the resolution of concerns raised through the Ombuds process.
+                                """
+                    },
+                        
+                    {
+                        "role": "user",
+                        "content": total_summary_object.choices[0].message.content
+                    }
+                ],
+                model="gpt-3.5-turbo-16k"
+            )
+
+            summmary_object_formatting = self.client.chat.completions.create(
+                messages=[
                     {
                         "role": "system",
                         "content": """
                         You are a military analyst. Internalize the following Morning Intelligence Update (MIU) format in the order provided. You must not write anything until I prompt you.
 
-                        Here's the format: 
+                    Here's the format: 
 
                         Unclassified
 
@@ -652,42 +711,97 @@ messages=[
                         The MIU Content Paragraph must be one, connected paragraph, no spaces, beginning with the BLUF in bold and ending with the assessment explaining why the development or event matters. 
 
                         Note: need the heading / last sentence should be part of the paragraph need as one whole thing 
-                        Find an example utilizing DIA standard as a reference.
+                    Find an example utilizing DIA standard as a reference.
                         """
+
                     },
                     {
                         "role": "user",
-                        "content": total_summary_object.choices[0].message.content
+                        "content": summary_object_analytical_standards.choices[0].message.content
                     }
                 ],
-        model="gpt-3.5-turbo-16k"
-        )
+                model="gpt-3.5-turbo-16k"
+            )
 
-        # total_summary_object.choices[0].message.content + "\n\n" + object_analytic_standards.choices[0].message.content
-        # summary_object_formatting.append(object_analytic_standards.choices[0].message.content.replace("\n", " "))
+            summary_object_JAC = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """
 
-        # summary_object_formatting = " ".join(object_analytic_standards)
+                        Review the summary object generated, and analyze it against this checklist. 
+                        Title:
+                    [Provide a clear and concise title that reflects the subject of the intelligence product]
 
-                    
-            # Create Citation
-        source_overall_classification = source['source_overall_classification']
-        source_cit_let = source_overall_classification[0] if source_overall_classification else ''
+                    Objective:
+                    Clearly state the primary objective of the intelligence product. What specific information or analysis is the product intended to convey? Ensure that the objective is narrowly defined and aligned with the purpose of the analysis.
 
-        current_datetime = datetime.datetime.now()
-        date_accessed = current_datetime.strftime("%d/%m/%Y")
-        source_citation = f"({source_cit_let});{source['source_originator']}; {source['source_country']}; {source['source_date_of_publication']}; ({source['source_classification']}) {source['source_title']}; Classification of extracted information is {source['source_portion_classification']}; Overall classification: {source['source_overall_classification']}, {date_accessed}"
+                    Political Consideration:
+                    Confirm that the analysis is independent of political considerations. Explicitly state any potential political implications or biases and ensure the content remains objective, unbiased, and focused on factual analysis.
 
-        summary_dict_object = {
-            "source_title": source["source_title"],
-            "source_classification": source["source_classification"],
-            "source_country": source["source_country"],
-            "source_type": source["source_type"],
-            "source_summary": total_summary_object.choices[0].message.content,
-            "source_citation": source_citation
-        }
+                    Timeliness:
+                    Verify the timeliness of the intelligence product. Assess the relevance of the information within the current geopolitical or operational context. Provide a timeline for key events or developments that contribute to the timeliness of the analysis.
 
-        self.summaries.append(summary_dict_object)
+                    Sources:
+                    Describe in detail the quality and credibility of underlying sources, data, and methodologies used in the analysis. Include not only basic, generic descriptions of cited reporting but also provide insights into the methodologies employed. Clearly identify which sources are deemed most important to major analytic judgments.
 
+                    Uncertainties:
+                    Express and explain uncertainties associated with major analytic judgments. Indicate levels of uncertainty and explain their basis. Provide a thorough discussion of the nature and sources of uncertainties affecting major analytic judgments. Identify indicators that, if detected, would alter levels of uncertainty.
+
+                    Distinctions:
+                    Ensure consistent distinctions among statements conveying underlying information, assumptions, and judgments. Explicitly state linchpin assumptions that serve as the foundation for the argument. Identify indicators that, if detected, could validate or refute judgments or assumptions. Clearly explain the implications for judgments if assumptions are proven incorrect.
+
+                    Alternatives:
+                    Incorporate a detailed analysis of alternatives. Present alternatives when uncertainties, complexity, or low probability/high impact situations warrant inclusion. Explain the evidence and reasoning behind each alternative. Discuss the likelihood or implications of each alternative related to U.S. interests. Identify indicators that, if detected, would affect the likelihood of any identified alternatives.
+
+                    Argumentation:
+                    Ensure the intelligence product uses clear and logical argumentation. Clearly present the main analytic message, ensuring it is prominent and aligned with the objective. Verify that reasoning is flawless and effectively combines evidence, context, and assumptions to support analytic judgments. Use clear language and a structure that displays a logical flow appropriate for the argument being presented.
+
+                    Change or Consistency:
+                    Explain any change to or consistency of analytic judgments. Clearly note how a major analytic judgment compares with previous production and explain how new information or reasoning supports changing or maintaining an existing analytic line. Highlight and explain how a major analytic judgment compares with judgments on the topic within the U.S. intelligence community, not just within the same analytic element.
+
+                    Accuracy:
+                    Verify that judgments or assessments are expressed clearly and conditioned. Ensure that each judgment or assessment is clearly articulated and qualified, using "if/then" statements when necessary.
+
+                    Visual Information:
+                    Incorporate effective visual information where appropriate. Ensure visual elements are not only pertinent but also clarify, complement, or augment data or analytic points in an effective manner. Take particularly effective advantage of visual presentational methods to convey data or analytic points in a way that enhances the product’s value by making complex issues more understandable, adding insight or perspective, increasing knowledge retention, or highlighting trends, drivers, or indicators.
+
+                    Review and Refinement:
+                    Review the generated intelligence product against each element in the checklist. Refine the content as needed to meet the specified standards. Consider feedback from team leads and subject matter experts in the refinement process.
+
+                        """
+
+                    },
+                    {
+                        "role": "user",
+                        "content": summmary_object_formatting.choices[0].message.content
+                    }
+                ],
+                model="gpt-3.5-turbo-16k"
+            )
+
+
+                # Create Citation
+            source_overall_classification = source['source_overall_classification']
+            source_cit_let = source_overall_classification[0] if source_overall_classification else ''
+
+            current_datetime = datetime.datetime.now()
+            date_accessed = current_datetime.strftime("%d/%m/%Y")
+            source_citation = f"({source_cit_let});{source['source_originator']}; {source['source_country']}; {source['source_date_of_publication']}; ({source['source_classification']}) {source['source_title']}; Classification of extracted information is {source['source_portion_classification']}; Overall classification: {source['source_overall_classification']}, {date_accessed}"
+
+            summary_dict_object = {
+                "source_title": source["source_title"],
+                "source_classification": source["source_classification"],
+                "source_country": source["source_country"],
+                "source_type": source["source_type"],
+                "source_summary": summary_object_JAC.choices[0].message.content,
+                "source_citation": source_citation
+            }
+
+            self.summaries.append(summary_dict_object)
+    # #    # Assuming 'self.summaries' is a list containing summary objects
+    #     for summary in self.summaries:
+    #             print(summary)
 
 
         print(f"Done Summarizing Source: {source['source_title']}")
@@ -696,88 +810,48 @@ messages=[
         self.summarize_button_text_variable.set("Sources Summarized")
         self.summarize_button["state"]=tk.NORMAL
 
+# creates window to view report in. 
+    def popup(self):
+        popupwindow = tk.Toplevel(self.window)
+        popupwindow.title("Virtual Analyst Preview Window")
+        popupwindow.geometry("200x100")
+        report = ["source_summary" "42"]
+        for summary in self.summaries: print(summary)
+        Preview = tk.Label(popupwindow, text = report["source_summary"])
+        button1 = tk.Button(popupwindow, text = "Done", command=popupwindow.destroy)
+        Preview.pack()
+        button1.pack()
+
+
+# Creates popup to view ATS
+
+    # def ats_popup(self):
+    #         ats_popup_window = tk.Toplevel(self.window)
+    #         ats_popup_window.title("Analytic Tradecraft Standards for Virtual Report")
+    #         ats_popup_window.geometry("200x100")
+    #         ats = "Use ATS"
+    #         include = tk.Label(ats_popup_window, text = ats["Use ATS"])
+    #         buttoni = tk.Button(ats_popup_window, text = "Done", command=ats_popup_window.destroy)
+    #         include.pack()
+    #         buttoni.pack()
+
+        
+
+
+
+
+
+
 # Call loading_page from the main thread
 # threading.Timer(0, loading_page, args=(self, self.summarize)).start()
     
+#designed to combine multiple reports into one
+# def combine_summaries(self, summaries):
+#     # Combine all summaries into one final summary
+#     final_summary = " ".join(summaries)
+#     return final_summary
 
-def combine_summaries(self, summaries):
-    # Combine all summaries into one final summary
-    final_summary = " ".join(summaries)
-    return final_summary
-
-
-def save_summaries_to_docx(self):
-    self.summarize_button_text_variable.set("Thinking...")
-    self.summarize_button["state"]=tk.DISABLED
-
-    print("Report Saved to Word File")
-    self.export_document.add_heading("[Intelligence Note or Reporting Highlights]", level=0)
-    for summary in self.summaries:
-        classification = self.export_document.add_paragraph()
-        classification.add_run(summary["source_classification"]).bold = True
-        # add caps to classification
-        country = self.export_document.add_paragraph()
-        country.add_run(summary["source_country"]).bold = True
-        title = self.export_document.add_paragraph()
-        title.add_run(summary["source_title"]).bold = True
-
-        self.export_document.add_paragraph()
-
-            
-        self.export_document.add_paragraph(summary["source_summary"])
-        
-        add_analystc_comment = self.export_document.add_paragraph()
-
-        self.export_document.add_paragraph()
-
-        add_analystc_comment.add_run("[Analyst Comment]").bold = True
-
-        citation = self.export_document.add_paragraph()
-        citation.add_run(summary["source_citation"])
-
-
-        self.summarize_button_text_variable.set("Document Saved")
-        self.summarize_button["state"]=tk.NORMAL
-
-        
-    # Export a document loading page
-    # Call loading_page from the main thread
-    # threading.Timer(0, loading_page, args=(self, self.save_summaries_to_docx)).start()
-
-    
-
-
-        self.export_document.save("ReportTemplate.docx")
-        self.summarize_button_text_variable.set("Summarize Sources")
-        self.summarize_button["state"]=tk.NORMAL
-
-
-# creates window to view report in. 
-        # def report_window():
-        #     popup = tk.Toplevel(root)
-        #     popup.title("Virtual Analyst Report")
-            
-        #     # Add widgets to the popup window
-        #     label = tk.Label(popup, text = summary["source_summary"])
-        #     label.pack(padx=10, pady=10)
-            
-        #     ok_button = tk.Button(popup, text="OK", command=popup.destroy)
-        #     ok_button.pack(pady=10)
-
-        # # Create the main Tkinter window
-        # root = tk.Tk()
-        # root.title("Report Preview")
-
-        # # Create a button to trigger the popup window
-        # popup_button = tk.Button(root, text="Preview Report", command=report_window)
-        # popup_button.pack(pady=20)
-
-        # # Run the Tkinter main loop
-        # root.mainloop()
-
-
-
-
+       # creating pptx code in progress              
 
     # def save_summaries_to_pptx(self):
     #     self.summarize_button_text_variable.set("Thinking...")
@@ -822,7 +896,7 @@ def save_summaries_to_docx(self):
 
 
 
-
+#loading screen code in progress
 
 # # Define root as a Tkinter window
 # root = tkinter.Tk()
