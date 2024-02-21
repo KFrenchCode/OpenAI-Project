@@ -30,12 +30,12 @@ import queue
 from pptx import Presentation
 from tkinter import messagebox
 
-
-#change background, to logo, 
-# ats view button 
+# ats to pdf
 # ATS
-# langchain 
-# google drive
+# ats prompt isnt being accessed -why? (line 823)
+# link ats_object to use_ats_popup and save_ats_to_docx
+# preview function
+# find a rag
 # joel - header?
 
 # def is_installed(package_name):
@@ -50,7 +50,7 @@ from tkinter import messagebox
 # is_installed('python-docx')
 
 
-#BG (blue = #1361A6), + image in python-first-steps, bg.  
+#BG (blue = #6EB3F4), + image in python-first-steps, bg.  
 
 tokenizer = BartTokenizer.from_pretrained('facebook/bart-large-cnn')
 model = BartForConditionalGeneration.from_pretrained('facebook/bart-large-cnn')
@@ -65,7 +65,7 @@ class ReportGeneratorApp:
         self.window = root
         # Initialize variables
         self.root: tk.Tk = root
-        self.bg_image = PhotoImage(file="/Users/kendrafrench/Dev/python-first-steps/BG/bgfinal.png")
+        self.bg_image = PhotoImage(file="/Users/kendrafrench/Dev/python-first-steps/BG/verticaldblcrestltblbg.png")
         # create a label 
         bg_label = Label(root, image = self.bg_image)
         bg_label.place(x=0,y=0, relwidth=1,relheight=1)
@@ -210,22 +210,55 @@ class ReportGeneratorApp:
             self.summarize_button_text_variable.set("Summarize Sources")
             self.summarize_button["state"]=tk.NORMAL
 
+    def save_ats_to_docx(self):
+        self.save_ats_to_docx_button.set("Thinking...")
+        self.save_ats_to_docx_button["state"]=tk.DISABLED
+
+        print("ATS for Report Saved to Word File")
+        self.export_document.add_heading("[ATS for Report Generated]", level=0)
+        for summary in self.summaries:
+            # classification = self.export_document.add_paragraph()
+            # title.add_run(summary["source_title"]).bold = True
+
+            self.export_document.add_paragraph()
+
+                
+            self.export_document.add_paragraph(summary["ats_object"])
+          
+
+            self.save_ats_to_docx_button.sete.set("ATS Saved")
+            self.summarize_button["state"]=tk.NORMAL
+
+            
+        # Export a document loading page
+        # Call loading_page from the main thread
+        # threading.Timer(0, loading_page, args=(self, self.save_summaries_to_docx)).start()
+
+        
+
+
+            self.export_document.save("ATSReport.docx")
+            self.save_ats_to_docx_button.set.set("Summarize Sources")
+            self.save_ats_to_docx_button["state"]=tk.NORMAL
+
+
+
 
     def create_initial_widgets(self):
         # Create title
-        title_label = tk.Label(self.root, text=self.title, font=("Arial", 25),bg="#1361A6")
+        title_label = tk.Label(self.root, text=self.title, font=("Arial", 25),bg="#6EB3F4")
         title_label.grid(column=0, row=0)
 
         # New Source Label
-        self.source_list_label = tk.Label(self.root, text="Add Source", font=("Arial", 18), bg="#1361A6")
+        self.source_list_label = tk.Label(self.root, text="Add Source", font=("Arial", 18), bg="#6EB3F4")
         self.source_list_label.grid(column=0, row=1)
 
         # Create first source frame
-        new_source_frame = tk.Frame(self.root, bg="#1361A6")
+        new_source_frame = tk.Frame(self.root, bg="#6EB3F4")
         new_source_frame.grid(column=0, row=2)
 
         # Title of Source Label
-        new_source_title_label = tk.Label(new_source_frame, text="Title of Source:", font=("Arial", 12), width=50,bg="#1361A6")
+        new_source_title_label = tk.Label(new_source_frame, text="Title of Source:", font=("Arial", 12), width=50,bg="#6EB3F4")
         new_source_title_label.grid(column=0, row=0, pady=5)
 
         # Title of Source Entry
@@ -233,7 +266,7 @@ class ReportGeneratorApp:
         self.new_source_title_entry.grid(column=1, row=0, pady=5)
 
         # Country of Source Label
-        new_source_country_label = tk.Label(new_source_frame, text="Country of Source:", font=("Arial", 12), width=50,bg="#1361A6")
+        new_source_country_label = tk.Label(new_source_frame, text="Country of Source:", font=("Arial", 12), width=50,bg="#6EB3F4")
         new_source_country_label.grid(column=0, row=1, pady=5)
 
         # Country of Source Entry
@@ -241,22 +274,22 @@ class ReportGeneratorApp:
         self.new_source_country_entry.grid(column=1, row=1, pady=5)
 
         # Source Type Label
-        source_type_label = tk.Label(new_source_frame, text="Source Type:", font=("Arial", 12),bg="#1361A6")
+        source_type_label = tk.Label(new_source_frame, text="Source Type:", font=("Arial", 12),bg="#6EB3F4")
         source_type_label.grid(column=0, row=2, pady=5)
 
         # Radio button for URL
-        self.source_type_url = tk.Radiobutton(new_source_frame, text="URL", bg="#1361A6", variable=self.source_type_var, value="url", command=self.toggle_source_input) 
+        self.source_type_url = tk.Radiobutton(new_source_frame, text="URL", bg="#6EB3F4", variable=self.source_type_var, value="url", command=self.toggle_source_input) 
         self.source_type_url.grid(column=1, row=2, pady=5)
 
         # Radio button for File
-        self.source_type_file = tk.Radiobutton(new_source_frame, text="File", bg="#1361A6", variable=self.source_type_var, value="file", command=self.toggle_source_input)
+        self.source_type_file = tk.Radiobutton(new_source_frame, text="File", bg="#6EB3F4", variable=self.source_type_var, value="file", command=self.toggle_source_input)
         self.source_type_file.grid(column=1, row=3, pady=5)
 
         # Initially, set the source type to URL
         self.source_type_var.set("url")
 
         # URL of Source Label
-        new_source_url_label = tk.Label(new_source_frame, text="URL:", font=("Arial", 12), bg="#1361A6")
+        new_source_url_label = tk.Label(new_source_frame, text="URL:", font=("Arial", 12), bg="#6EB3F4")
         new_source_url_label.grid(column=0, row=4, pady=5)
 
         # # URL of Source Entry
@@ -264,13 +297,13 @@ class ReportGeneratorApp:
         self.new_source_url_entry.grid(column=1, row=4, pady=5)
 
         # # File Upload Button
-        self.file_upload_button = tk.Button(new_source_frame, text="Select File", bg="#1361A6", command=self.upload_file)
+        self.file_upload_button = tk.Button(new_source_frame, text="Select File", bg="#6EB3F4", command=self.upload_file)
         # self.file_upload_button.grid(column=0, row=4, pady=5)
 
         # (Endnote classification) Originator; Source identifier; Date of publication; (skipping 1/17) Date of information [optional but preferred]; (Classification of title/subject) Title/Subject; (skipping 1/17) Page/paragraph or portion indicator [required when applicable]; Classification of extracted information is “X”; Overall classification is “X”; Access date.
 
         # URL of Source Label
-        originator_label = tk.Label(new_source_frame, text="Originator:", font=("Arial", 12), bg="#1361A6")
+        originator_label = tk.Label(new_source_frame, text="Originator:", font=("Arial", 12), bg="#6EB3F4")
         originator_label.grid(column=0, row=5, pady=5)
 
         # Originator Entry
@@ -278,7 +311,7 @@ class ReportGeneratorApp:
         self.originator_entry.grid(column=1, row=5, pady=5)
 
         # Date of Publication Label
-        date_publication_label = tk.Label(new_source_frame, text="Date of Publication:", font=("Arial", 12), bg="#1361A6")
+        date_publication_label = tk.Label(new_source_frame, text="Date of Publication:", font=("Arial", 12), bg="#6EB3F4")
         date_publication_label.grid(column=0, row=6, pady=5)
 
         # Date of Publication Entry
@@ -293,7 +326,7 @@ class ReportGeneratorApp:
         ]
 
         # Class. Title Label
-        classification_title_label = tk.Label(new_source_frame, text="Classification of Subject/Title:", font=("Arial", 12),bg="#1361A6")
+        classification_title_label = tk.Label(new_source_frame, text="Classification of Subject/Title:", font=("Arial", 12),bg="#6EB3F4")
         classification_title_label.grid(column=0, row=7, pady=5)
 
         # Class. Title Entry
@@ -302,7 +335,7 @@ class ReportGeneratorApp:
         self.classification_title.grid(column=1, row=7, pady=5)
 
         # Class. Title Label
-        portion_classification_label = tk.Label(new_source_frame, text="Classification of Portion:", font=("Arial", 12),bg="#1361A6")
+        portion_classification_label = tk.Label(new_source_frame, text="Classification of Portion:", font=("Arial", 12),bg="#6EB3F4")
         portion_classification_label.grid(column=0, row=8, pady=5)
 
         # Class. Portion Entry
@@ -311,7 +344,7 @@ class ReportGeneratorApp:
         self.portion_classification.grid(column=1, row=8, pady=5)
 
         # Class. Title Label
-        overall_classification_label = tk.Label(new_source_frame, text="Overall Classification:", font=("Arial", 12),bg="#1361A6")
+        overall_classification_label = tk.Label(new_source_frame, text="Overall Classification:", font=("Arial", 12),bg="#6EB3F4")
         overall_classification_label.grid(column=0, row=9, pady=5)
 
         # Class. Overall Entry
@@ -321,43 +354,54 @@ class ReportGeneratorApp:
 
 
         # Submit Button
-        new_source_submit = tk.Button(new_source_frame, text="Add Source", bg="#1361A6", command=self.add_new_source_command)
+        new_source_submit = tk.Button(new_source_frame, text="Add Source", bg="#6EB3F4", command=self.add_new_source_command)
         new_source_submit.grid(column=0, row=10, pady=5)
 
 
         #Source List Label
-        self.source_list_label = tk.Label(self.root, text="Source List", font=("Arial", 18), bg="#1361A6", width=50)
+        self.source_list_label = tk.Label(self.root, text="Source List", font=("Arial", 18), bg="#6EB3F4", width=50)
         self.source_list_label.grid(column=1, row=1)
 
         # Source List Frame
-        self.source_list_frame = tk.Frame(self.root,bg="#1361A6")
+        self.source_list_frame = tk.Frame(self.root,bg="#6EB3F4")
         self.source_list_frame.grid(column=1, row=2, sticky="nsew")
+
+
+
+        # Save Summaries Frame 
+        self.save_source_summaries_frame = tk.Frame(self.root, bg="#6EB3F4")
+        self.save_source_summaries_frame.grid(column=0, row=4)
 
         # Summarize Button
         self.summarize_button_text_variable = tk.StringVar()
         self.summarize_button_text_variable.set("Summarize Sources")
-        self.summarize_button = tk.Button(self.root, textvariable=self.summarize_button_text_variable, bg="#1361A6", command=self.summarize)
-        self.summarize_button.grid(column=0, row=3)
+        self.summarize_button = tk.Button(self.root, textvariable=self.summarize_button_text_variable, bg="#6EB3F4", command=self.summarize)
+        self.summarize_button.grid(column=0, row=3, pady=6)
+        #Preview Report
+        self.preview_report_button = tk.Button(self.save_source_summaries_frame, text="Preview Report", bg="#6EB3F4", command=self.popup)
+        self.preview_report_button.grid(column=0, row=1, pady=6)
 
+        # # Use ATS Button
+        self.use_ats_button = tk.Button(self.save_source_summaries_frame, text = "Preview ATS", command=self.ats_popup)
+        self.use_ats_button.grid(column=1, row=2, pady=10)
 
-        # Save Summaries Frame 
-        self.save_source_summaries_frame = tk.Frame(self.root, bg="#1361A6")
-        self.save_source_summaries_frame.grid(column=0, row=4)
-
-        # New Source Label
-        self.save_source_summaries_label = tk.Label(self.save_source_summaries_frame, text="Save Source", font=("Arial", 16),bg="#1361A6")
-        self.save_source_summaries_label.grid(column=0, row=0)
+        # Save ATS to docx Button
+        self.save_ats_to_docx_button =tk.Button(self.save_source_summaries_frame, text = "Save ATS to Word Document", bg="#6EB3F4", command=self.save_ats_to_docx)
+        self.save_ats_to_docx_button.grid(column=1, row=3, pady=8)
+        # # New Source Label
+        # self.save_source_summaries_label = tk.Label(self.save_source_summaries_frame, text="Save Source", font=("Arial", 16),bg="#6EB3F4")
+        # self.save_source_summaries_label.grid(column=0, row=0)
 
         #Save to DOC
         
         self.save_button_text_variable = tk.StringVar()
         self.summarize_button_text_variable.set("Summarize Sources")
-        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to Word Document", bg="#1361A6", command=self.save_summaries_to_docx)
-        self.save_source_summaries_button.grid(column=0, row=1, pady=5)
+        self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save Report to Word Document", bg="#6EB3F4", command=self.save_summaries_to_docx)
+        self.save_source_summaries_button.grid(column=0, row=2, pady=5)
 
         #Save to PDF
-        self.save_source_summaries_button_pdf = tk.Button(self.save_source_summaries_frame, text="Save to PDF",bg="#1361A6", command=self.save_summaries_to_pdf)
-        self.save_source_summaries_button_pdf.grid(column=0, row=2, pady=6)
+        self.save_source_summaries_button_pdf = tk.Button(self.save_source_summaries_frame, text="Save Report to to PDF",bg="#6EB3F4", command=self.save_summaries_to_pdf)
+        self.save_source_summaries_button_pdf.grid(column=0, row=3, pady=6)
 
          #Save to pptx
         
@@ -366,19 +410,14 @@ class ReportGeneratorApp:
         # self.save_source_summaries_button = tk.Button(self.save_source_summaries_frame, text="Save to PowerPoint", command=self.save_summaries_to_pptx)
         # self.save_source_summaries_button.grid(column=0, row=3, pady=9)
 
-        #Preview Report
-        self.preview_report_button = tk.Button(self.save_source_summaries_frame, text="Preview Report", bg="#1361A6", command=self.popup)
-        self.preview_report_button.grid(column=0, row=2, pady=6)
 
-        # # Use ATS Button
-        # self.use_ats_button = tk.Button(self.save_source_summaries_frame, text = "Would you like to include the ATS?", command=self.ats_popup)
-        # self.use_ats_button.grid(column=0, row=2, pady=6)
+    
 
 
          # Disclaimer Label
         self.disclaimer_label = tk.Label(self.root, text="     * Please note that this program uses ChatGPT, and as such no classified data should be input through the system. * \n \n"
-                                                                  "    * The analytical standards and writing style used are up to date as of January 2022 but will not update until the system itself is updated.*" , font=("Arial", 14), bg="#1361A6") 
-        self.disclaimer_label.grid(column=0, row=5, pady=15)
+                                                                  "    * The analytical standards and writing style used are up to date as of January 2022 but will not update until the system itself is updated.*" , font=("Arial", 14), bg="#6EB3F4") 
+        self.disclaimer_label.grid(column=0, row=10, pady=15)
 
 
 
@@ -398,7 +437,7 @@ class ReportGeneratorApp:
 
     def create_file_upload_button(self):
         # Create a file upload button
-        self.file_upload_button = tk.Button(self.root, text="Select File", bg="#1361A6",command=self.upload_file)
+        self.file_upload_button = tk.Button(self.root, text="Select File", bg="#6EB3F4",command=self.upload_file)
         self.file_upload_button.grid(row=4, pady=5, padx=5)
 
     def upload_file(self):
@@ -427,7 +466,7 @@ class ReportGeneratorApp:
             source_title = source["source_title"]
             
             # Source List Item Title
-            source_list_title = tk.Label(self.source_list_frame, text=source_title, font=("Arial", 12),bg="#1361A6")
+            source_list_title = tk.Label(self.source_list_frame, text=source_title, font=("Arial", 12),bg="#6EB3F4")
             source_list_title.grid(column=0, row=i, sticky="w")
 
             # Delete Button
@@ -779,6 +818,8 @@ class ReportGeneratorApp:
                 ],
                 model="gpt-3.5-turbo-16k"
             )
+            
+            self.formatted_total_summary = summmary_object_formatting.choices[0].message.content
 
 
                 # Create Citation
@@ -825,15 +866,266 @@ class ReportGeneratorApp:
 
 # Creates popup to view ATS
 
-    # def ats_popup(self):
-    #         ats_popup_window = tk.Toplevel(self.window)
-    #         ats_popup_window.title("Analytic Tradecraft Standards for Virtual Report")
-    #         ats_popup_window.geometry("200x100")
-    #         ats = "Use ATS"
-    #         include = tk.Label(ats_popup_window, text = ats["Use ATS"])
-    #         buttoni = tk.Button(ats_popup_window, text = "Done", command=ats_popup_window.destroy)
-    #         include.pack()
-    #         buttoni.pack()
+    def ats_popup(self):
+            ats_popup_window = tk.Toplevel(self.window)
+            ats_popup_window.title("Analytic Tradecraft Standards for Virtual Report")
+            ats_popup_window.geometry("200x100")
+
+            # PROBLEM: We need some data from the summary step to implement and build an ATS. 
+            # EITHER: We save the entire ATS in the summary step (wasteful, since there's a possibility it won't be used)
+            # OR: We save the formatted total summary to be used in this step <- we're trying this
+            if self.formatted_total_summary is None:
+                return
+            
+            ats_object = self.client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": """Do not respond. internalize these standards and format to analyze a text provided separately
+                        (U) Analytic Tradecraft Summary
+
+                        (Class) Confidence Level: 
+
+                        State your confidence level in the main assessment 
+
+                        explain the basis for it by referencing your sources of uncertainty including strengths and weaknesses in the information base, assumptions, gaps, alternatives, and the complexity of the issue. Use the following guide to determine your confidence level, and choose the confidence level that best reflects the text. 
+
+                        Signs that indicate high confidence: 
+                        Well-corroborated information from proven sources; minimal contradictory reporting; low potential for deception; few information gaps. 
+                        Assumptions would not have a significant effect on the assessment if incorrect. 
+                        Very unlikely alternative. 
+                        Routine event that is well understood; relatively few variables. 
+
+                        Signs that indicate medium confidence:
+                        Partially corroborated information from good sources; some potential for deception; several gaps in the information base. 
+                        Plausible, yet unlikely, alternatives. 
+                        Key assumptions with potentially substantial effect on the assessment if incorrect. 
+                        More complex situation with multiple issues or actors; some previous examples that are well understood. 
+
+                        Signs that indicate low confidence:
+                        Uncorroborated information; high potential for deception; many critical gaps in the information base. 
+                        Plausible alternatives with a nearly even chance of occurring. 
+                        Key assumptions with substantial effect on the assessment if incorrect. 
+                        Highly complex or rapidly evolving situation with multiple issues or actors; few previous examples that are not well understood.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                        (CLASS) Sourcing: Provide considerable detail on the strengths and weaknesses of the reporting used for the assessment, focusing on the credibility and quality of the sourcing. Do not provide a summary of what each intelligence type (INT) told you for the analysis. Do not provide a summary of what the reporting said. Identify which sources/reporting was the most important to the assessment and judgment.
+
+                        Elements of source characterization:
+                        Context 
+                        When did the reported information occur? 
+                        What are the source’s strengths or weaknesses? (subject matter expertise, biases, possible denial and deception, etc.) 
+                        Credibility/Quality 
+                        Is the information credible? Is it of good quality? (accurate, consistent with other reporting, plausible given circumstances) 
+                        Reliability 
+                        Is the source reliable? (vetted, history of reliable reporting) 
+                        Access 
+                        How close is the source to the information? (first-, secondhand, further removed 
+                        Source Types 
+                        Who told us? (informant) 
+                        Who did/said? (actor) 
+                        What is the origin of the reporting? (type of intelligence) 
+
+                        (CLASS) Gaps: Include intelligence gaps along with a description about the extent to which filling that intelligence gap would alter or bolster your assessment. Intelligence gaps must be tied to your main assessment if those gaps are critical to and underpin the main judgment. 
+
+                        Characterize the extent and limits of your knowledge base. What are some remaining intelligence gaps that prevent you from making a stronger or more useful assessment and that are not explicitly covered by an assumption or judgment?
+
+                        (CLASS) Assumptions: Clearly state a linchpin or gap-bridging assumption(s) underpinning the main assessment. An assumption should help readers understand the connecting tissue between the evidence and the assessment; it generally is something that an analyst believes to be true, but lacks evidence, and if incorrect, would force a change to the assessment. When crafting an assumption, think along the lines of “what would change my assessment?” Identify indicators that could validate or refute assumptions and explain the implication for judgements in assumptions that are incorrect.
+
+                        Internalize the different assumptions of the text and identify which ones are apparent. 
+
+                        Framing assumptions:
+                        What longstanding analytic lines are related to the assessment?
+
+                        What beliefs do we hold about what “will always,” “will never,” or
+                        “generally will” occur, or what “has always” or “has never” been done
+                        or happened, relative to the intelligence question?
+
+                        Do we have a default mindset in how we approach this problem?
+
+                        What are the relevant historical precedents for this question?
+
+                        Have we identified any trends that we expect to continue?
+
+                        Scoping assumptions:
+                        What factors, drivers, or variables are not included in the analysis?
+
+                        What factors are we “holding constant” and assuming will
+                        not change?
+
+                        Have we assumed that certain events will or will not take place
+                        or that certain factors will or will not change?
+
+                        Have we clarified which actors, events, and timeframes are and are
+                        not included?
+
+                        Have we defined all of the key terms and concepts in our analysis?
+
+                        Evidence assumptions:
+                        Are there multiple possible interpretations of our evidence?
+
+                        Why do we lean toward one interpretation rather than another?
+
+                        What beliefs do we hold about our information base that lead us
+                        to ascribe more value to certain pieces of information?
+
+                        What are our beliefs about the extent of our access to all
+                        relevant information?
+
+                        Logic assumptions:
+                        Have we used a small sample to infer something about
+                        a broader group?
+
+                        Have we extrapolated from a known situation to an unknown
+                        situation?
+
+                        Do we believe that certain types of events or activities are
+                        symptomatic of or more/less likely to occur with some wider
+                        phenomenon or conclusion?
+
+                        Do we believe that one event or factor is causing or affecting
+                        another event?
+
+                        Bridging assumptions:
+                        What are the essential elements of information needed to answer the
+                        intelligence question? For which elements do we lack evidence? For
+                        which do we have significant uncertainty?
+
+                        What are the factors or conditions that must be present for the
+                        assessment to be true (or false), and do we have evidence that they
+                        are (or are not) present?
+
+                        For each assumption type, determine if they are high impact assumptions, low impact assumptions, and also determine if they are assumptions that are weak or strong. Internalize definitions below. 
+
+                        (U) High-impact assumptions, if proved false, invalidate or significantly alter
+                        the assessment.
+
+                        (U) Low-impact assumptions, if proved false, change only an aspect of the assessment,
+                        such as the scope, specificity, likelihood, or timeframe.
+
+                        (U) An assumption is weak or vulnerable if we can imagine a plausible situation, or
+                        multiple situations, in which the assumption might not be true.
+
+                        (U) An assumption is strong if we have difficulty imagining a situation in which
+                        the assumption might not be true because such a circumstance is highly unlikely
+                        or implausible.
+
+                        Based on what you read, choose between high-impact assumptions and low-impact assumptions to characterize the text. Also choose between if the assumption is either weak or strong. 
+
+                        (CLASS) Alternatives: Include a plausible and useful alternative to your main assessment. Explain the reasoning and/or evidence that underpins the alternatives. Discuss the alternative likelihood or implications related to United States interests. Identify indicators that, if identified, would affect the likelihood of the alternatives.
+
+                        First, identify the sources of the uncertainty that bound our understanding of a problem set. This
+                        can be done as part of a regularly occurring analytic line review or in support of a specific project.
+                        The following questions can identify gaps, assumptions, or different interpretations of evidence that
+                        can generate alternatives: 
+
+                        What prevents us from being absolutely certain that our authoritative judgment is correct?
+
+                        What limits our confidence level?
+
+                        What are the assessment’s underlying assumptions, and under what conditions might
+                        they prove false?
+
+                        What are the weaknesses of our information base?
+
+                        Is there any contradictory reporting?
+
+                        Could there be denial and deception, deliberate falsification, or other misinformation
+                        that could affect our analysis?
+
+                        Are we over relying, or relying exclusively, on one intelligence collection stream
+                        or platform?
+
+                        Second, consider alternative hypotheses. Discussing these can enable better detection of future
+                        events or developments that change the authoritative assessment. Ask:
+
+                        What other hypotheses or options did we consider, and are they plausible?
+
+                        Are there multiple explanations for the information we have?
+
+                        How vulnerable is the assessment to change?
+
+                        What would have to change to make us reconsider the expected outcome?
+
+                        What indicators of change would we expect to be captured with our collection assets?
+
+                        What indicators do we think we could not observe?
+
+                        Finally, consider the implications of our assessments for our clients in order to mitigate surprise,
+                        allow for planning, and provide warning:
+
+                        What are the implications for U.S. interests if we are wrong about our assessment?
+                        •
+                        What types of plausible events would be game changers, that is, would fundamentally shift
+                        the issues of import or outcomes we currently anticipate? What would the implications be?
+
+                        How would we know that our alternative is becoming likely or that our authoritative assessment
+                        is becoming unlikely?
+
+                        Next address the elements below to ensure the alternatives presented in every product are useful, plausible, and rigorous.
+
+                        What is the alternative to the authoritative assessment?
+
+                        What is its likelihood (relative and absolute)? Some alternatives may be highly unlikely, whereas
+                        others may not be significantly less likely than the authoritative assessment.
+
+                        What reasoning and/or evidence substantiates the plausibility of the alternative? Explain
+                        the support for the alternative, rather than using the alternative to bolster the case for the
+                        authoritative assessment.
+
+                        What are the implications for U.S. interests of the alternative that warrant consideration?
+
+                        When appropriate, what indicators would, if observed, affect the likelihood of the alternative
+                        and the authoritative assessment?
+
+                        Internalize approaches to writing alternative assessments. 
+
+                        Exploring the Potential for Surprise. This approach to analysis of alternatives examines the
+                        impact of a hard-to-predict event or a surprise to facilitate contingency planning. It includes
+                        collectible, specific indicators to providing warning.
+
+                        Competing Assessments. This approach clarifies the alternative’s strengths and weaknesses
+                        as compared with the authoritative assessment. This type of alternative can be, but is not limited
+                        to, a competing view from another IC element. Addressing alternatives can enhance the credibility
+                        of our assessments.
+
+                        Discussing the Implications of Information or Assumptions. This approach examines the
+                        impact of key information or assumptions on our judgments, allowing clients to determine
+                        whether contingency planning is needed. Indicators are highlighted, as appropriate, in the product.
+
+                        These directions internalized write at least two alternatives to the initial assessment in the text. 
+
+                        :"""
+
+                    },
+                    {
+                        "role": "user",
+                        "content":  self.formatted_total_summary
+                    }
+                ],
+                model="gpt-3.5-turbo-16k"
+            )
+
+            ats = ats_object.choices[0].message.content
+
+            include = tk.Label(ats_popup_window, text = ats, width=60)
+            buttoni = tk.Button(ats_popup_window, text = "Done", command=ats_popup_window.destroy)
+            include.pack()
+            buttoni.pack()
 
         
 
