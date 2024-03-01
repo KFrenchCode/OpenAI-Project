@@ -1,3 +1,7 @@
+# python libraries / transformers used: elasticsearch, transformers
+
+# step 1 - setting up the retrieval model
+
 # Example code using Elasticsearch for retrieval
 from elasticsearch import Elasticsearch # retrieval model
 
@@ -8,3 +12,23 @@ es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
 def retrieve_documents(user_query):
     result = es.search(index="your_index", body={"query": {"match": {"content": user_query}}})
     return result['hits']['hits']
+
+# step 2 - connecting to natural language generation (NLG) model (OpenAI GPT in this case)
+
+# Example code using transformers library for NLG
+from transformers import T5ForConditionalGeneration, T5Tokenizer
+
+def generate_response(context):
+    # Load pre-trained T5 model and tokenizer
+    model = T5ForConditionalGeneration.from_pretrained('t5-base')
+    tokenizer = T5Tokenizer.from_pretrained('t5-base')
+
+    # Tokenize the context
+    input_ids = tokenizer.encode("generate response: " + context, return_tensors="pt")
+
+    # Generate response
+    output = model.generate(input_ids, max_length=50, num_beams=5, no_repeat_ngram_size=2, top_k=50, top_p=0.95)
+
+    # Decode and return the generated response
+    response = tokenizer.decode(output[0], skip_special_tokens=True)
+    return response
