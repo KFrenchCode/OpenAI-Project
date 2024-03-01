@@ -1,0 +1,10 @@
+# Example code using Elasticsearch for retrieval
+from elasticsearch import Elasticsearch # retrieval model
+
+# Set up Elasticsearch connection
+es = Elasticsearch([{'host': 'localhost', 'port': 9200}])
+
+# Query Elasticsearch for relevant documents
+def retrieve_documents(user_query):
+    result = es.search(index="your_index", body={"query": {"match": {"content": user_query}}})
+    return result['hits']['hits']
