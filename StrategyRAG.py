@@ -9,7 +9,7 @@ from haystack.utils import Secret
 document_store = InMemoryDocumentStore()
 
 pipeline = Pipeline()
-pipeline.add_component("converter", AzureOCRDocumentConverter(endpoint="azure_resource_url", api_key=Secret.from_token("565001e88e8d46cc9353039b6de7bbbe")))
+pipeline.add_component("converter", AzureOCRDocumentConverter(endpoint="https://intelligence-strategy-rag.cognitiveservices.azure.com/", api_key=Secret.from_token("565001e88e8d46cc9353039b6de7bbbe")))
 pipeline.add_component("cleaner", DocumentCleaner())
 pipeline.add_component("splitter", DocumentSplitter(split_by="sentence", split_length=5))
 pipeline.add_component("writer", DocumentWriter(document_store=document_store))
